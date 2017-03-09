@@ -64,7 +64,10 @@ class MainClass {
             }
 
             if (commandLine.hasOption(C_LIST)) {
-                println(new STF().getAvailableDeviceSerials())
+                def deviceSerials = new STF().getAvailableDeviceSerials()
+                deviceSerials.each {
+                    println it
+                }
                 hasAction = true
             }
 
