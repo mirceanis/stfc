@@ -1,5 +1,9 @@
+import org.gradle.internal.os.OperatingSystem
+
+import java.nio.file.Files;
+
 group 'ro.mirceanistor.stf'
-version '0.1'
+version '0.2'
 
 apply plugin: 'groovy'
 
@@ -45,8 +49,43 @@ task install(dependsOn: fatJar) {
     doLast {
         configurations.archives.allArtifacts.each {
             if (it.name == "${project.name}-all".toString()) {
-                def installResult = "${rootDir}/install.sh ${it.getFile()}".execute().text
-                logger.debug "installed stfc tool that uses ${it.getFile()}\n The actual output of the task is: ${installResult}"
+
+                def installDir = "${System.getProperty("user.home")}/.local/stf-connect"
+                def jarName = it.getFile().name
+                def jarLocation = "$installDir/$jarName"
+                def installLocation = "$installDir/stfc"
+                def artifactLocation = it.getFile()
+                def symlinkPath = new File("${System.getProperty("user.home")}/.local/bin/stfc").toPath()
+
+                copy {
+                    from "$artifactLocation"
+                    into "$installDir"
+                }
+
+                if (OperatingSystem.current().isWindows()) {
+                    //create bat bootstrap
+                    def batStrap = new File("${installLocation}.bat")
+                    batStrap.text = "@echo off\n"
+                    batStrap.text += "java -jar \"${jarLocation}\" \"%*\""
+                    //the user will have to add this to PATH
+                    logger.lifecycle("Created bat bootstrap in ${installDir}.\n\n" +
+                            "If you want global access to this tool, add ${installDir} to your PATH")
+
+                } else {
+                    //create bash bootstrap
+                    def bashStrap = new File(installLocation)
+                    bashStrap.text = "#!/bin/bash\n"
+                    bashStrap.text += "java -jar \"${jarLocation}\" \"\$@\""
+                    bashStrap.setExecutable(true, true)
+                    //symlink to the bash script
+                    Files.delete(symlinkPath)
+                    Files.createSymbolicLink(symlinkPath, new File(installLocation).toPath())
+
+                    logger.lifecycle("\nCreated \"stfc\" bootstrap in \"${installDir}\".\n" +
+                            "Add it to your PATH if you want global access")
+                }
+
+
             } else {
                 logger.debug "skipping installation for thin archive ${it.getFile()}"
             }
