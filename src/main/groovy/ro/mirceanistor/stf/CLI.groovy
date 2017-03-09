@@ -41,10 +41,6 @@ class CLI {
         String fullPath = clz.getResource(resource).toString()
 
         String archivePath = fullPath.substring(0, fullPath.length() - resource.length())
-        if (archivePath.endsWith("\\WEB-INF\\classes") || archivePath.endsWith("/WEB-INF/classes")) {
-            archivePath = archivePath.substring(0, archivePath.length() - "/WEB-INF/classes".length())
-            // Required for wars
-        }
 
         try {
             InputStream input = new URL(archivePath + "/META-INF/MANIFEST.MF").openStream()

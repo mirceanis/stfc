@@ -11,6 +11,7 @@ class PropertyLoader {
      */
     static def getStfPropertiesPaths() {
         def result = [
+                System.getProperty("user.home") + "/.gradle/gradle.properties",
                 new File(getPathToJar()).parent + PROPERTIES_STF_FILE,
                 new File(getPathToJar()).parent + PROPERTIES_FILE,
                 System.getProperty("user.home") + PROPERTIES_STF_FILE,
@@ -29,10 +30,6 @@ class PropertyLoader {
         String fullPath = clz.getResource(resource).toString()
 
         String archivePath = fullPath.substring(0, fullPath.length() - resource.length())
-        if (archivePath.endsWith("\\WEB-INF\\classes") || archivePath.endsWith("/WEB-INF/classes")) {
-            archivePath = archivePath.substring(0, archivePath.length() - "/WEB-INF/classes".length())
-            // Required for wars
-        }
 
         if (archivePath.startsWith("jar:")) {
             archivePath = archivePath.substring("jar:".length())
@@ -41,7 +38,6 @@ class PropertyLoader {
         if (archivePath.endsWith("!")) {
             archivePath = archivePath.substring(0, archivePath.length() - 1)
         }
-
 
         String pathToThisJar = new URL(archivePath).file
         return pathToThisJar
