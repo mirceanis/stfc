@@ -1,5 +1,4 @@
 import org.gradle.internal.os.OperatingSystem
-
 import java.nio.file.Files;
 
 group 'ro.mirceanistor.stf'
@@ -49,13 +48,13 @@ task install(dependsOn: fatJar) {
     doLast {
         configurations.archives.allArtifacts.each {
             if (it.name == "${project.name}-all".toString()) {
-
-                def installDir = "${System.getProperty("user.home")}/.local/stf-connect"
+                def sep = File.separator
+                def installDir = "${System.getProperty("user.home")}${sep}.local${sep}stf-connect"
                 def jarName = it.getFile().name
-                def jarLocation = "$installDir/$jarName"
-                def installLocation = "$installDir/stfc"
+                def jarLocation = "${installDir}${sep}${jarName}"
+                def installLocation = "${installDir}${sep}stfc"
                 def artifactLocation = it.getFile()
-                def symlinkPath = new File("${System.getProperty("user.home")}/.local/bin/stfc").toPath()
+                def symlinkPath = new File("${System.getProperty("user.home")}${sep}.local${sep}bin${sep}stfc").toPath()
 
                 copy {
                     from "$artifactLocation"
@@ -66,16 +65,16 @@ task install(dependsOn: fatJar) {
                     //create bat bootstrap
                     def batStrap = new File("${installLocation}.bat")
                     batStrap.text = "@echo off\n"
-                    batStrap.text += "java -jar \"${jarLocation}\" \"%*\""
+                    batStrap.text += "java -jar \"${jarLocation}\" %*"
                     //the user will have to add this to PATH
-                    logger.lifecycle("Created bat bootstrap in ${installDir}.\n\n" +
+                    logger.lifecycle("\nCreated bat bootstrap in ${installDir}.\n" +
                             "If you want global access to this tool, add ${installDir} to your PATH")
 
                 } else {
                     //create bash bootstrap
                     def bashStrap = new File(installLocation)
                     bashStrap.text = "#!/bin/bash\n"
-                    bashStrap.text += "java -jar \"${jarLocation}\" \"\$@\""
+                    bashStrap.text += "java -jar \"${jarLocation}\" \$@"
                     bashStrap.setExecutable(true, true)
                     //symlink to the bash script
                     Files.delete(symlinkPath)
