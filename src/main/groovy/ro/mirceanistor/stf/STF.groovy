@@ -7,6 +7,7 @@ import java.util.logging.Logger
 
 import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.Method.*
+import static ro.mirceanistor.stf.MainClass.VERBOSE_OUTPUT
 
 /**
  * A class representing a subset of the STF API relating to device reservation and connection.
@@ -23,7 +24,7 @@ class STF {
     def STF_URL = null;
 
     // the logger used by the project
-    def logger = null;
+    Logger logger = null;
 
     def TOKEN_GENERATION_INSTRUCTIONS = "\nTo generate a token, go to the STF console.\n" +
             "Under Settings / Keys / Access Tokens, click the \"+\" button to generate a new token.\n" +
@@ -42,7 +43,7 @@ class STF {
 
         logger = Logger.getGlobal()
 
-        if (MainClass.VERBOSE_OUTPUT) {
+        if (VERBOSE_OUTPUT) {
             logger.setLevel(Level.INFO)
         } else {
             logger.setLevel(Level.WARNING)
@@ -133,6 +134,126 @@ class STF {
         }
 
         return deviceList*.serial;
+    }
+
+    /**
+     * Check if any of the given set of `filters` prefix the provided `filterFullName`
+     * @param filterFullName the full name of the filter to check against
+     * @param filters the set of filters passed
+     * @return
+     */
+    def startsWith(String filterFullName, String[] filters) {
+        def matches = filters.findAll {
+            filterFullName.startsWith(it)
+        }
+
+        if (matches.size() == 1) {
+            return true;
+        } else {
+            if (matches.size() > 1) {
+                logger.warning("Multiple filters match $filterFullName: $filters")
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Transforms the array of filters into a list of maps [key,value], splitting by "="
+     * @param filters the array of filters from command line
+     * @return
+     */
+    static def getFilterMap(String[] filters) {
+        filters.collect {
+            def kv = it.split("=");
+            def key = kv[0]
+            def value = kv.size() > 1 ? kv[1..-1].join("=") : null
+            [key: key, value: value]
+        }
+    }
+
+    /**
+     * Check if any of the given set of `filters` prefix the provided `filterFullName`
+     * @param filterFullName the full name of the filter to check against
+     * @param filters the set of filters passed
+     * @return
+     */
+    def getFilterValue(String filterFullName, String[] filters) {
+
+        def matches = getFilterMap(filters).findAll {
+            filterFullName.startsWith(it.key)
+        }
+
+        if (matches.size() > 0) {
+            if (matches.size() > 1) {
+                logger.warning("Multiple filters match; returning the first match ONLY $filterFullName: $filters;")
+            }
+            return matches[0].value;
+        }
+    }
+
+    /**
+     * Returns a collection of ALL devices that are usable or in use
+     * @return Collection<DeviceInfo>
+     */
+    def getAllDevices() {
+        def response = stf_api.request(GET, JSON) { req ->
+            uri.path = '/api/v1/devices'
+        }
+
+        return response.devices.findAll {
+            //skip disconnected or preparing
+            if (it.ready == false || it.present == false) {
+                return false;
+            }
+            true
+        }.collect {
+            new DeviceInfo(it.serial, it.display.width, it.display.height, Integer.valueOf(it.sdk), it.name, it.model, it.remoteConnectUrl, it.notes, it.using, it.owner?.email)
+        }
+
+    }
+
+    /**
+     * Filter through devices provided by STF by [sdk, connectionString, notes and reservation status]
+     * @param filters set of filters usually provided by command line
+     * @param quiet whether or not to output only device serials
+     * @return
+     */
+    Collection<String> queryDevices(String[] filters, boolean quiet) {
+
+        boolean onlyUnreservedDevices = startsWith("unreserved", filters)
+        def sdk = getFilterValue("sdk", filters)
+        def connectionFilter = getFilterValue("connect", filters)
+        def notesFilter = getFilterValue("notes", filters)
+
+        def deviceList = getAllDevices().findAll {
+
+            if (onlyUnreservedDevices && (it.ownerEmail != null)) {
+                logger?.info("skipping device with owner=${it.ownerEmail} because `unreserved` filter is active")
+                return false
+            }
+
+            if (sdk != null && it.sdk != Integer.valueOf(sdk)) {
+                return false
+            }
+
+            if (connectionFilter != null && !it.remoteConnectUrl?.contains(connectionFilter)) {
+                logger?.info("skipping device with connectionString=${it.remoteConnectUrl} because `connect=$connectionFilter` filter is active")
+                return false
+            }
+
+            if (notesFilter != null && !it.notes?.contains(notesFilter)) {
+                logger?.info("skipping device with notes=${it.notes} because `notes=$notesFilter` filter is active")
+                return false
+            }
+
+            true
+        }
+
+        if (quiet) {
+            return deviceList*.serial
+        } else {
+            return deviceList;
+        }
     }
 
     /**
