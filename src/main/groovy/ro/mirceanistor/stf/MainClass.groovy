@@ -97,13 +97,11 @@ class MainClass {
                 CLI.printUsage(options)
             }
 
-        } catch (Throwable ignored) {
+        } catch (Throwable ex) {
             System.err.print("generic error on the following arguments: ")
-            for (String arg : args) {
-                System.err.print(arg + " ")
-            }
+            System.err.print args?.join(" ")
             System.err.print("\n")
-            ignored.printStackTrace()
+            ex.printStackTrace()
         }
 
     }

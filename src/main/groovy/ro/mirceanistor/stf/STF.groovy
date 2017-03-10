@@ -15,16 +15,16 @@ import static ro.mirceanistor.stf.MainClass.VERBOSE_OUTPUT
  */
 class STF {
 
-    def stf_api;
+    def stf_api
 
     //per user access token
     def STF_ACCESS_TOKEN = null
 
     //the STF api URL
-    def STF_URL = null;
+    def STF_URL = null
 
     // the logger used by the project
-    Logger logger = null;
+    Logger logger = null
 
     def TOKEN_GENERATION_INSTRUCTIONS = "\nTo generate a token, go to the STF console.\n" +
             "Under Settings / Keys / Access Tokens, click the \"+\" button to generate a new token.\n" +
@@ -41,7 +41,7 @@ class STF {
 
         (STF_URL, STF_ACCESS_TOKEN) = parseProjectProperties()
 
-        logger = Logger.getGlobal()
+        logger = Logger.getLogger("hello")
 
         if (VERBOSE_OUTPUT) {
             logger.setLevel(Level.INFO)
@@ -54,7 +54,7 @@ class STF {
 
         stf_api.handler.'401' = { resp ->
             throw new RuntimeException("Unauthorized request: ${resp.statusLine}\n" +
-                    "\nThis is most likely caused by a STF_ACCESS_TOKEN mismatch.\n" + TOKEN_GENERATION_INSTRUCTIONS);
+                    "\nThis is most likely caused by a STF_ACCESS_TOKEN mismatch.\n" + TOKEN_GENERATION_INSTRUCTIONS)
         }
 
     }
@@ -100,7 +100,7 @@ class STF {
 
             response.failure = { resp ->
                 throw new RuntimeException("Something went wrong with the request, we got: ${resp.statusLine}\n" +
-                        "Most likely, the device has been disconnected or has been reserved in the meantime");
+                        "Most likely, the device has been disconnected or has been reserved in the meantime")
             }
         }
 
@@ -133,7 +133,7 @@ class STF {
             (it.owner == null) && it.ready == true && it.present == true
         }
 
-        return deviceList*.serial;
+        return deviceList*.serial
     }
 
     /**
@@ -148,23 +148,24 @@ class STF {
         }
 
         if (matches.size() == 1) {
-            return true;
+            return true
         } else {
             if (matches.size() > 1) {
                 logger.warning("Multiple filters match $filterFullName: $filters")
             }
-            return false;
+            return false
         }
     }
 
     /**
      * Transforms the array of filters into a list of maps [key,value], splitting by "="
+     * XXX: perhaps in a future release this will support more conditional operators ( like != < <= > >= ) and/or ranges (like "sdk=18-24" )
      * @param filters the array of filters from command line
      * @return
      */
     static def getFilterMap(String[] filters) {
         filters.collect {
-            def kv = it.split("=");
+            def kv = it.split("=")
             def key = kv[0]
             def value = kv.size() > 1 ? kv[1..-1].join("=") : null
             [key: key, value: value]
@@ -187,7 +188,7 @@ class STF {
             if (matches.size() > 1) {
                 logger.warning("Multiple filters match; returning the first match ONLY $filterFullName: $filters;")
             }
-            return matches[0].value;
+            return matches[0].value
         }
     }
 
@@ -203,7 +204,7 @@ class STF {
         return response.devices.findAll {
             //skip disconnected or preparing
             if (it.ready == false || it.present == false) {
-                return false;
+                return false
             }
             true
         }.collect {
@@ -220,19 +221,41 @@ class STF {
      */
     Collection<String> queryDevices(String[] filters, boolean quiet) {
 
-        boolean onlyUnreservedDevices = startsWith("unreserved", filters)
-        def sdk = getFilterValue("sdk", filters)
+        //only unreserved devices
+        boolean freeDevices = startsWith("unreserved", filters)
+
+        //only devices in use by current user (ignores `freeDevices` filter)
+        boolean deviceInUseFilter = startsWith("using", filters)
+
+        //devices matching a particular Android SDK (int)
+        def sdkFilter = getFilterValue("sdk", filters)
+
+        //devices whose `serial` field contains the given substring
+        def serialFilter = getFilterValue("serial", filters)
+
+        //devices whose `adb connection` field contains the given substring
         def connectionFilter = getFilterValue("connect", filters)
+
+        //devices whose `notes` field string contains the given substring
         def notesFilter = getFilterValue("notes", filters)
+
+
+
 
         def deviceList = getAllDevices().findAll {
 
-            if (onlyUnreservedDevices && (it.ownerEmail != null)) {
-                logger?.info("skipping device with owner=${it.ownerEmail} because `unreserved` filter is active")
+            if (freeDevices && (it.ownerEmail != null)) {
+                logger?.info("skipping device owned by `${it.ownerEmail}` because `unreserved` filter is active")
                 return false
             }
 
-            if (sdk != null && it.sdk != Integer.valueOf(sdk)) {
+            if (deviceInUseFilter && !it.using) {
+                logger?.info("skipping device `${it.serial}` because it is not in use by current user and `using` filter is active")
+                return false
+            }
+
+            if (sdkFilter != null && it.sdk != Integer.valueOf(sdkFilter)) {
+                logger?.info("skipping device with sdk=${it.sdk} because `sdk=$sdkFilter` filter is active")
                 return false
             }
 
@@ -246,13 +269,18 @@ class STF {
                 return false
             }
 
+            if (serialFilter != null && !it.serial?.contains(serialFilter)) {
+                logger?.info("skipping device with serial=${it.serial} because `serial=$serialFilter` filter is active")
+                return false
+            }
+
             true
         }
 
         if (quiet) {
             return deviceList*.serial
         } else {
-            return deviceList;
+            return deviceList
         }
     }
 
@@ -261,7 +289,7 @@ class STF {
      * @param serials an array of SERIALs to reserve. If the array contains the item "all", then all the devices provided by STF will be reserved
      */
     def addDevicesWithSerials(String[] serials) {
-        def availableDeviceSerials = getAvailableDeviceSerials();
+        def availableDeviceSerials = getAvailableDeviceSerials()
         logger?.info "availableDeviceSerials are: $availableDeviceSerials; we're going to connect to $serials"
 
         if (serials.contains("all")) {
