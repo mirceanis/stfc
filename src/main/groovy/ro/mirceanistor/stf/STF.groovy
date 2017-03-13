@@ -164,21 +164,36 @@ class STF {
      * @return
      */
     static def getFilterMap(String[] filters) {
-        filters.collect {
-            def kv = it.split("=")
-            def key = kv[0]
-            def value = kv.size() > 1 ? kv[1..-1].join("=") : null
-            [key: key, value: value]
+        def pattern = /^(?<key>[a-zA-Z]+)(?<operator>=)*(?<value>.*)/
+
+        filters.findResults {
+            def matcher = (it =~ pattern)
+            if (matcher.matches()) {
+                def key = matcher.group("key")
+                def operator = matcher.group("operator")
+                def value = matcher.group("value")
+
+                if (operator == null) {
+                    value = true
+                    operator = "="
+                }
+
+                [key: key, value: value, operator: operator]
+
+            } else {
+                logger?.warning("Can't parse filter: \"${it}\"")
+                null
+            }
         }
     }
 
     /**
-     * Check if any of the given set of `filters` prefix the provided `filterFullName`
+     * Check if any of the given set of `filters` prefix the provided `filterFullName` and return the filter
      * @param filterFullName the full name of the filter to check against
      * @param filters the set of filters passed
-     * @return
+     * @return the FIRST parsed filter that matches the check
      */
-    def getFilterValue(String filterFullName, String[] filters) {
+    def getFilter(String filterFullName, String[] filters) {
 
         def matches = getFilterMap(filters).findAll {
             filterFullName.startsWith(it.key)
@@ -188,13 +203,13 @@ class STF {
             if (matches.size() > 1) {
                 logger.warning("Multiple filters match; returning the first match ONLY $filterFullName: $filters;")
             }
-            return matches[0].value
+            return matches[0]
         }
     }
 
     /**
      * Returns a collection of ALL devices that are usable or in use
-     * @return Collection<DeviceInfo>
+     * @return Collection < DeviceInfo >
      */
     def getAllDevices() {
         def response = stf_api.request(GET, JSON) { req ->
@@ -228,19 +243,16 @@ class STF {
         boolean deviceInUseFilter = startsWith("using", filters)
 
         //devices matching a particular Android SDK (int)
-        def sdkFilter = getFilterValue("sdk", filters)
+        def sdkFilter = getFilter("sdk", filters)
 
         //devices whose `serial` field contains the given substring
-        def serialFilter = getFilterValue("serial", filters)
+        def serialFilter = getFilter("serial", filters).value
 
         //devices whose `adb connection` field contains the given substring
-        def connectionFilter = getFilterValue("connect", filters)
+        def connectionFilter = getFilter("connect", filters).value
 
         //devices whose `notes` field string contains the given substring
-        def notesFilter = getFilterValue("notes", filters)
-
-
-
+        def notesFilter = getFilter("notes", filters).value
 
         def deviceList = getAllDevices().findAll {
 
@@ -254,10 +266,36 @@ class STF {
                 return false
             }
 
-            if (sdkFilter != null && it.sdk != Integer.valueOf(sdkFilter)) {
-                logger?.info("skipping device with sdk=${it.sdk} because `sdk=$sdkFilter` filter is active")
-                return false
+            if (sdkFilter != null) {
+                def deviceSDK = (int) it.sdk;
+                def matchesSDK
+
+                switch (sdkFilter.value) {
+                //for range filters of the form `sdk=18-23`
+                    case ~/^[0-9]+-[0-9]+$/:
+                        def range = sdkFilter.value.split("-").collect { it as int }
+                        matchesSDK = (deviceSDK in range[0]..range[1])
+                        break
+
+                //for range filters of the form `sdk=18+`
+                    case ~/^[0-9]+\+$/:
+                        matchesSDK = deviceSDK >= (sdkFilter.value[0..-2] as int)
+                        break
+
+                //simple case `sdk=23`
+                    default:
+                        matchesSDK = (deviceSDK == (sdkFilter.value as int))
+                        break
+                }
+
+                if (matchesSDK) {
+                    return true
+                } else {
+                    logger?.info("skipping device with sdk=${it.sdk} because `sdk=$sdkFilter` filter is active")
+                    return false
+                }
             }
+
 
             if (connectionFilter != null && !it.remoteConnectUrl?.contains(connectionFilter)) {
                 logger?.info("skipping device with connectionString=${it.remoteConnectUrl} because `connect=$connectionFilter` filter is active")
@@ -284,10 +322,10 @@ class STF {
         }
     }
 
-    /**
-     * Use the STF API to reserve a list of devices
-     * @param serials an array of SERIALs to reserve. If the array contains the item "all", then all the devices provided by STF will be reserved
-     */
+/**
+ * Use the STF API to reserve a list of devices
+ * @param serials an array of SERIALs to reserve. If the array contains the item "all", then all the devices provided by STF will be reserved
+ */
     def addDevicesWithSerials(String[] serials) {
         def availableDeviceSerials = getAvailableDeviceSerials()
         logger?.info "availableDeviceSerials are: $availableDeviceSerials; we're going to connect to $serials"
@@ -308,11 +346,11 @@ class STF {
         }
     }
 
-    /**
-     * Use the STF API to get a connection string that can later be used with ADB to connect to a particular device
-     * @param serial the target device SERIAL
-     * @return the connect URL
-     */
+/**
+ * Use the STF API to get a connection string that can later be used with ADB to connect to a particular device
+ * @param serial the target device SERIAL
+ * @return the connect URL
+ */
     def getConnectionString(String serial) {
         def resp = stf_api.request(POST, JSON) { req ->
             body = []
@@ -321,9 +359,9 @@ class STF {
         return resp.remoteConnectUrl
     }
 
-    /**
-     * Run "adb connect" for all the devices that are currently reserved from this machine
-     */
+/**
+ * Run "adb connect" for all the devices that are currently reserved from this machine
+ */
     def connectToReservedDevices() {
 
         def resp = stf_api.request(GET, JSON) { req ->
@@ -343,11 +381,11 @@ class STF {
         logger?.info "these are all the devices currently accessible through ADB on this machine:\n" + adbDevicesOutput
     }
 
-    /**
-     * Use the STF API to release all devices.
-     * This is equivalent to clicking "Stop using" from the STF UI for each device.
-     * This should automatically disconnect devices from ADB as well
-     */
+/**
+ * Use the STF API to release all devices.
+ * This is equivalent to clicking "Stop using" from the STF UI for each device.
+ * This should automatically disconnect devices from ADB as well
+ */
     def releaseReservedDevices() {
         def getUserDevicesResponse = stf_api.request(GET, JSON) { req ->
             uri.path = '/api/v1/user/devices'
