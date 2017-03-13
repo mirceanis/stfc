@@ -17,6 +17,8 @@ class STF {
 
     def stf_api
 
+    def filters = {}
+
     //per user access token
     def STF_ACCESS_TOKEN = null
 
@@ -37,7 +39,7 @@ class STF {
      * This will be used in gradle tasks
      * @param project the Project that this class is being used from
      */
-    STF() {
+    STF(Collection<String> rawFilters) {
 
         (STF_URL, STF_ACCESS_TOKEN) = parseProjectProperties()
 
@@ -49,6 +51,8 @@ class STF {
             logger.setLevel(Level.WARNING)
         }
 
+        filters = parseFilters(rawFilters)
+
         stf_api = new HTTPBuilder("$STF_URL")
         stf_api.setHeaders([Authorization: "Bearer $STF_ACCESS_TOKEN"])
 
@@ -56,6 +60,7 @@ class STF {
             throw new RuntimeException("Unauthorized request: ${resp.statusLine}\n" +
                     "\nThis is most likely caused by a STF_ACCESS_TOKEN mismatch.\n" + TOKEN_GENERATION_INSTRUCTIONS)
         }
+
 
     }
 
@@ -137,33 +142,12 @@ class STF {
     }
 
     /**
-     * Check if any of the given set of `filters` prefix the provided `filterFullName`
-     * @param filterFullName the full name of the filter to check against
-     * @param filters the set of filters passed
-     * @return
-     */
-    def startsWith(String filterFullName, String[] filters) {
-        def matches = filters.findAll {
-            filterFullName.startsWith(it)
-        }
-
-        if (matches.size() == 1) {
-            return true
-        } else {
-            if (matches.size() > 1) {
-                logger.warning("Multiple filters match $filterFullName: $filters")
-            }
-            return false
-        }
-    }
-
-    /**
      * Transforms the array of filters into a list of maps [key,value], splitting by "="
      * XXX: perhaps in a future release this will support more conditional operators ( like != < <= > >= ) and/or ranges (like "sdk=18-24" )
      * @param filters the array of filters from command line
      * @return
      */
-    static def getFilterMap(String[] filters) {
+    static def parseFilters(def filters) {
         def pattern = /^(?<key>[a-zA-Z]+)(?<operator>=)*(?<value>.*)/
 
         filters.findResults {
@@ -193,9 +177,9 @@ class STF {
      * @param filters the set of filters passed
      * @return the FIRST parsed filter that matches the check
      */
-    def getFilter(String filterFullName, String[] filters) {
+    def getFilter(String filterFullName) {
 
-        def matches = getFilterMap(filters).findAll {
+        def matches = filters.findAll {
             filterFullName.startsWith(it.key)
         }
 
@@ -204,6 +188,8 @@ class STF {
                 logger.warning("Multiple filters match; returning the first match ONLY $filterFullName: $filters;")
             }
             return matches[0]
+        } else {
+            return [key:"exists", operator: null, value: false]
         }
     }
 
@@ -234,29 +220,29 @@ class STF {
      * @param quiet whether or not to output only device serials
      * @return
      */
-    Collection<String> queryDevices(String[] filters, boolean quiet) {
+    Collection<DeviceInfo> queryDevices() {
 
         //only unreserved devices
-        boolean freeDevices = startsWith("free", filters)
+        boolean filterByAvailability = getFilter("free").value
 
         //only devices in use by current user (ignores `freeDevices` filter)
-        boolean deviceInUseFilter = startsWith("using", filters)
+        boolean deviceInUseFilter = getFilter("using").value
 
         //devices matching a particular Android SDK (int)
-        def sdkFilter = getFilter("sdk", filters)
+        def sdkFilter = getFilter("sdk")
 
         //devices whose `serial` field contains the given substring
-        def serialFilter = getFilter("serial", filters).value
+        def filterBySerial = getFilter("serial").value
 
         //devices whose `adb connection` field contains the given substring
-        def connectionFilter = getFilter("connect", filters).value
+        def filterByConnection = getFilter("connect").value
 
         //devices whose `notes` field string contains the given substring
-        def notesFilter = getFilter("notes", filters).value
+        def filterByNotes = getFilter("notes").value
 
-        def deviceList = getAllDevices().findAll {
+        getAllDevices().findAll {
 
-            if (freeDevices && (it.ownerEmail != null)) {
+            if (filterByAvailability && (it.ownerEmail != null)) {
                 logger?.info("skipping device owned by `${it.ownerEmail}` because `free` filter is active")
                 return false
             }
@@ -266,7 +252,7 @@ class STF {
                 return false
             }
 
-            if (sdkFilter != null) {
+            if (sdkFilter.value) {
                 def deviceSDK = (int) it.sdk;
                 def matchesSDK
 
@@ -297,52 +283,37 @@ class STF {
             }
 
 
-            if (connectionFilter != null && !it.remoteConnectUrl?.contains(connectionFilter)) {
-                logger?.info("skipping device with connectionString=${it.remoteConnectUrl} because `connect=$connectionFilter` filter is active")
+            if (filterByConnection && !it.remoteConnectUrl?.contains(filterByConnection)) {
+                logger?.info("skipping device with connectionString=${it.remoteConnectUrl} because `connect=$filterByConnection` filter is active")
                 return false
             }
 
-            if (notesFilter != null && !it.notes?.contains(notesFilter)) {
-                logger?.info("skipping device with notes=${it.notes} because `notes=$notesFilter` filter is active")
+            if (filterByNotes && !it.notes?.contains(filterByNotes)) {
+                logger?.info("skipping device with notes=${it.notes} because `notes=$filterByNotes` filter is active")
                 return false
             }
 
-            if (serialFilter != null && !it.serial?.contains(serialFilter)) {
-                logger?.info("skipping device with serial=${it.serial} because `serial=$serialFilter` filter is active")
+            if (filterBySerial && !it.serial?.contains(filterBySerial)) {
+                logger?.info("skipping device with serial=${it.serial} because `serial=$filterBySerial` filter is active")
                 return false
             }
 
             true
         }
-
-        if (quiet) {
-            return deviceList*.serial
-        } else {
-            return deviceList
-        }
     }
 
 /**
  * Use the STF API to reserve a list of devices
- * @param serials an array of SERIALs to reserve. If the array contains the item "all", then all the devices provided by STF will be reserved
+ * @param devicesToReserve an array of SERIALs to reserve. If the array contains the item "all", then all the devices provided by STF will be reserved
  */
-    def reserveDevicesWithSerials(String[] serials) {
+    def reserveDevicesWithSerials(Collection<DeviceInfo> devicesToReserve) {
         def availableDeviceSerials = getAvailableDeviceSerials()
-        logger?.info "availableDeviceSerials are: $availableDeviceSerials; we're going to connect to $serials"
+        logger?.info "availableDeviceSerials are: $availableDeviceSerials; we're going to connect to $devicesToReserve"
 
-        if (serials.contains("all")) {
-            availableDeviceSerials.each {
-                def reserveDeviceOutput = reserveDevice(it)
-                logger?.info "reserving device $it, got response: " + reserveDeviceOutput?.description
-            }
-        } else {
-            serials.each { serial ->
-                if (availableDeviceSerials.contains(serial)) {
-                    def reserveDeviceOutput = reserveDevice(serial)
-                    logger?.info "reserving device $serial"
-                    logger?.info "got response: " + reserveDeviceOutput?.description
-                }
-            }
+        devicesToReserve.each { device ->
+                def reserveDeviceOutput = reserveDevice(device.serial)
+                logger?.info "reserving device $device"
+                logger?.info "got response: " + reserveDeviceOutput?.description
         }
     }
 
@@ -351,6 +322,7 @@ class STF {
  * @param serial the target device SERIAL
  * @return the connect URL
  */
+    @SuppressWarnings("GroovyUnusedDeclaration")
     def getConnectionString(String serial) {
         def resp = stf_api.request(POST, JSON) { req ->
             body = []
@@ -362,16 +334,12 @@ class STF {
 /**
  * Run "adb connect" for all the devices that are currently reserved from this machine
  */
-    def connectToAllReservedDevices() {
+    def connectToDevices(Collection<DeviceInfo> devicesToConnect) {
 
-        def resp = stf_api.request(GET, JSON) { req ->
-            uri.path = '/api/v1/user/devices'
-        }
+        logger?.info "There are ${devicesToConnect.size} devices available through STF.\nConnecting to each one of:\n" + devicesToConnect*.remoteConnectUrl + "\n"
 
-        logger?.info "There are ${resp.devices.size} devices available through STF.\nConnecting to each one of:\n" + resp.devices*.remoteConnectUrl + "\n"
-
-        resp.devices*.serial.each {
-            def connectionString = getConnectionString(it)
+        devicesToConnect.each {
+            def connectionString = it.remoteConnectUrl
             logger?.info "connecting ADB to ${connectionString}"
             def adbConnectOutput = "adb connect $connectionString".execute().text
             logger?.info adbConnectOutput
@@ -386,11 +354,8 @@ class STF {
  * This is equivalent to clicking "Stop using" from the STF UI for each device.
  * This should automatically disconnect devices from ADB as well
  */
-    def releaseAllReservedDevices() {
-        def getUserDevicesResponse = stf_api.request(GET, JSON) { req ->
-            uri.path = '/api/v1/user/devices'
-        }
-        getUserDevicesResponse.devices*.serial.each {
+    def releaseDevices(Collection<DeviceInfo> devicesToRelease) {
+        devicesToRelease*.serial.each {
             if (it != null) {
                 logger?.info "releasing device with serial $it"
                 def releaseDeviceOutput = releaseDevice(it)

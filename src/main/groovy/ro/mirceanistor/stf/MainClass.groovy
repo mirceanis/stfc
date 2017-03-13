@@ -62,33 +62,45 @@ class MainClass {
             }
 
             boolean hasAction = false
+            def rawFilters = [] as List
+
+            if (commandLine.hasOption(C_FILTER)) {
+                rawFilters = commandLine.getOptionValues(C_FILTER) as List
+            }
 
             if (commandLine.hasOption(C_ALL)) {
-                new STF().reserveDevicesWithSerials("all")
+                STF stf = new STF(rawFilters + "free")
+                def deviceSerials = stf.queryDevices()
+                stf.reserveDevicesWithSerials(deviceSerials)
                 hasAction = true
             }
 
             if (commandLine.hasOption(C_CONNECT)) {
-                new STF().connectToAllReservedDevices()
+                STF stf = new STF(rawFilters + "using")
+                def deviceSerials = stf.queryDevices()
+                stf.connectToDevices(deviceSerials)
                 hasAction = true
             }
 
             if (commandLine.hasOption(C_RELEASE)) {
-                new STF().releaseAllReservedDevices()
+                STF stf = new STF(rawFilters + "using")
+                def deviceSerials = stf.queryDevices()
+                stf.releaseDevices(deviceSerials)
                 hasAction = true
             }
 
             if (commandLine.hasOption(C_LIST)) {
 
                 //by default, show all available devices
-                String[] filters = ["free"]
-                if (commandLine.hasOption(C_FILTER)) {
-                    filters = commandLine.getOptionValues(C_FILTER)
-                }
+                def filters = (rawFilters.size() == 0 ? { "free" } : rawFilters)
 
-                def deviceSerials = new STF().queryDevices(filters, QUIET_OUTPUT)
-                deviceSerials.each {
-                    println it
+                def devices = new STF(filters).queryDevices()
+                devices.each {
+                    if (QUIET_OUTPUT) {
+                        println it.serial
+                    } else {
+                        println it
+                    }
                 }
                 hasAction = true
             }
