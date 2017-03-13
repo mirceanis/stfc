@@ -1,5 +1,8 @@
 package ro.mirceanistor.stf
 
+/**
+ * A class that represents the device properties we care about
+ */
 class DeviceInfo {
     DeviceInfo(def serial, def width, def height, def sdk, def name, def model, def connectionString, def notes, def using, def ownerEmail) {
         this.serial = serial
