@@ -11,14 +11,14 @@ import static org.mockito.Mockito.when
  */
 public class STFTest {
 
-    String[] rawFilters = ["sdk=23",
-                           "free",
-                           "using=true",
-                           "sdk=18-22",
-                           "sdk=18+",
-                           //these filters require some reinterpretation
-                           "notes~[a-zA-Z0-9]*?:"
-    ]
+//    String[] rawFilters = ["sdk=23",
+//                           "free",
+//                           "using=true",
+//                           "sdk=18-22",
+//                           "sdk=18+",
+//                           //these filters require some reinterpretation
+//                           "notes~[a-zA-Z0-9]*?:"
+//    ]
 
     def gigelDevices = [
             new DeviceInfo("gigel_asdf", 480, 800, 15, "alab", "mockDevice", "adb connect 10.10.20.13:5555", "", false, "gigel13@mailinator.com"),
@@ -43,6 +43,11 @@ public class STFTest {
 
     def allDevices = gigelDevices + freeDevices + myDevices
 
+    STFTest() {
+        MainClass.VERBOSE_OUTPUT = true
+    }
+
+
     @Test
     public void checkFilterByFreeDevices() throws Exception {
         STF mocked = spy(new STF(["free"]))
@@ -52,6 +57,40 @@ public class STFTest {
         def queryResult = mocked.queryDevices()
 
         assert queryResult == freeDevices
+    }
+
+    @Test
+    public void checkFilterByOccupiedDevices() throws Exception {
+        STF mocked = spy(new STF(["free=false"]))
+
+        when(mocked.getAllDevices()).thenReturn(allDevices)
+
+        def queryResult = mocked.queryDevices()
+
+        assert queryResult == gigelDevices + myDevices
+    }
+
+
+    @Test
+    public void checkFilterByNotUsing() throws Exception {
+        STF mocked = spy(new STF(["using=false"]))
+
+        when(mocked.getAllDevices()).thenReturn(allDevices)
+
+        def queryResult = mocked.queryDevices()
+
+        assert queryResult == gigelDevices + freeDevices
+    }
+
+    @Test
+    public void checkFilterByInvalidBoolean() throws Exception {
+        STF mocked = spy(new STF(["using=gigel"]))
+
+        when(mocked.getAllDevices()).thenReturn(allDevices)
+
+        def queryResult = mocked.queryDevices()
+
+        assert queryResult == gigelDevices + freeDevices
     }
 
     @Test
@@ -108,18 +147,5 @@ public class STFTest {
 
         assert queryResult == [freeDevices[3], myDevices[3]]
     }
-
-    @Test
-    public void checkFilterByNotUsing() throws Exception {
-        STF mocked = spy(new STF(["using=false"]))
-
-        when(mocked.getAllDevices()).thenReturn(allDevices)
-
-        def queryResult = mocked.queryDevices()
-
-        assert queryResult == gigelDevices + freeDevices
-    }
-
-
 
 }

@@ -175,7 +175,7 @@ class STF {
      * Check if any of the given set of `filters` prefix the provided `filterFullName` and return the filter
      * @param filterFullName the full name of the filter to check against
      * @param filters the set of filters passed
-     * @return the FIRST parsed filter that matches the check
+     * @return the FIRST parsed filter that matches the check or `null` if there is none
      */
     def getFilter(String filterFullName) {
 
@@ -189,7 +189,7 @@ class STF {
             }
             return matches[0]
         } else {
-            return [key:"exists", operator: null, value: false]
+            return null
         }
     }
 
@@ -223,36 +223,41 @@ class STF {
     Collection<DeviceInfo> queryDevices() {
 
         //only unreserved devices
-        boolean filterByAvailability = getFilter("free").value
+        def filterByAvailability = getFilter("free")
 
         //only devices in use by current user (ignores `freeDevices` filter)
-        boolean deviceInUseFilter = getFilter("using").value
+        def filterByCurrentUser = getFilter("using")
 
         //devices matching a particular Android SDK (int)
         def sdkFilter = getFilter("sdk")
 
         //devices whose `serial` field contains the given substring
-        def filterBySerial = getFilter("serial").value
+        def filterBySerial = getFilter("serial")?.value
 
         //devices whose `adb connection` field contains the given substring
-        def filterByConnection = getFilter("connect").value
+        def filterByConnection = getFilter("connect")?.value
 
         //devices whose `notes` field string contains the given substring
-        def filterByNotes = getFilter("notes").value
+        def filterByNotes = getFilter("notes")?.value
 
         getAllDevices().findAll {
 
-            if (filterByAvailability && (it.ownerEmail != null)) {
-                logger?.info("skipping device owned by `${it.ownerEmail}` because `free` filter is active")
-                return false
+            if (filterByAvailability) {
+                boolean isFree = (it.ownerEmail == null)
+                if (filterByAvailability.value.toBoolean() == !isFree) {
+                    logger?.info("skipping device owned by `${it.ownerEmail}` because `free` filter is ${filterByAvailability.value}")
+                    return false
+                }
             }
 
-            if (deviceInUseFilter && !it.using) {
-                logger?.info("skipping device `${it.serial}` because it is not in use by current user and `using` filter is active")
-                return false
+            if (filterByCurrentUser) {
+                if (filterByCurrentUser.value.toBoolean() != it.using) {
+                    logger?.info("skipping device `${it.serial}` because in_use_by_current_user=${it.using} and `using` filter is set to `${filterByCurrentUser.value}`")
+                    return false
+                }
             }
 
-            if (sdkFilter.value) {
+            if (sdkFilter) {
                 def deviceSDK = (int) it.sdk;
                 def matchesSDK
 
@@ -311,9 +316,9 @@ class STF {
         logger?.info "availableDeviceSerials are: $availableDeviceSerials; we're going to connect to $devicesToReserve"
 
         devicesToReserve.each { device ->
-                def reserveDeviceOutput = reserveDevice(device.serial)
-                logger?.info "reserving device $device"
-                logger?.info "got response: " + reserveDeviceOutput?.description
+            def reserveDeviceOutput = reserveDevice(device.serial)
+            logger?.info "reserving device $device"
+            logger?.info "got response: " + reserveDeviceOutput?.description
         }
     }
 
