@@ -1,5 +1,6 @@
 import org.gradle.internal.os.OperatingSystem
-import java.nio.file.Files;
+
+import java.nio.file.Files
 
 group 'ro.mirceanistor.stf'
 version '0.2'
@@ -62,13 +63,44 @@ task install(dependsOn: fatJar) {
                 }
 
                 if (OperatingSystem.current().isWindows()) {
+
                     //create bat bootstrap
                     def batStrap = new File("${installLocation}.bat")
                     batStrap.text = "@echo off\n"
                     batStrap.text += "java -jar \"${jarLocation}\" %*"
-                    //the user will have to add this to PATH
-                    logger.lifecycle("\nCreated bat bootstrap in ${installDir}.\n" +
-                            "If you want global access to this tool, add ${installDir} to your PATH")
+
+                    logger.lifecycle("\nCreated bat bootstrap in ${installDir}.")
+
+                    //add install directory to STFC_HOME user variable
+                    def stfcHome = "STFC_HOME"
+                    "SETX ${stfcHome} \"${installDir}\"".execute()
+
+                    //add STFC_HOME to PATH (user scope)
+                    def queryProcess = "REG QUERY HKCU\\Environment /v PATH".execute()
+
+                    def userPath = ""
+                    if (queryProcess.waitFor() == 0) {
+
+                        //"PATH" variable already exists in the user space
+                        //sanitize the output to extract the data
+                        def rawOutput = queryProcess.text.tokenize(" ")
+                        rawOutput = rawOutput.subList(3, rawOutput.size)
+                        userPath = rawOutput.join(" ").trim()
+
+                        if (userPath[-1] != ";") {
+                            userPath += ";"
+                        }
+                    }
+
+                    if (!userPath.contains("%${stfcHome}%")) {
+
+                        userPath += "%${stfcHome}%"
+
+                        //SETX command could not be used here because it's limited to 1024 chars
+                        "REG ADD HKCU\\Environment /v PATH /t REG_EXPAND_SZ /d \"${userPath}\" /f".execute()
+                    }
+
+                    logger.lifecycle("\nThe bootstrap location was added to PATH.")
 
                 } else {
                     //create bash bootstrap
@@ -83,7 +115,6 @@ task install(dependsOn: fatJar) {
                     logger.lifecycle("\nCreated \"stfc\" bootstrap in \"${installDir}\".\n" +
                             "Add it to your PATH if you want global access")
                 }
-
 
             } else {
                 logger.debug "skipping installation for thin archive ${it.getFile()}"
