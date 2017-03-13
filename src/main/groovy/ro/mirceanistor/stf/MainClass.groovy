@@ -64,24 +64,24 @@ class MainClass {
             boolean hasAction = false
 
             if (commandLine.hasOption(C_ALL)) {
-                new STF().addDevicesWithSerials("all")
+                new STF().reserveDevicesWithSerials("all")
                 hasAction = true
             }
 
             if (commandLine.hasOption(C_CONNECT)) {
-                new STF().connectToReservedDevices()
+                new STF().connectToAllReservedDevices()
                 hasAction = true
             }
 
             if (commandLine.hasOption(C_RELEASE)) {
-                new STF().releaseReservedDevices()
+                new STF().releaseAllReservedDevices()
                 hasAction = true
             }
 
             if (commandLine.hasOption(C_LIST)) {
 
                 //by default, show all available devices
-                String[] filters = ["unreserved"]
+                String[] filters = ["free"]
                 if (commandLine.hasOption(C_FILTER)) {
                     filters = commandLine.getOptionValues(C_FILTER)
                 }

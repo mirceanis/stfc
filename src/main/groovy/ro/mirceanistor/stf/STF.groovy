@@ -237,7 +237,7 @@ class STF {
     Collection<String> queryDevices(String[] filters, boolean quiet) {
 
         //only unreserved devices
-        boolean freeDevices = startsWith("unreserved", filters)
+        boolean freeDevices = startsWith("free", filters)
 
         //only devices in use by current user (ignores `freeDevices` filter)
         boolean deviceInUseFilter = startsWith("using", filters)
@@ -257,7 +257,7 @@ class STF {
         def deviceList = getAllDevices().findAll {
 
             if (freeDevices && (it.ownerEmail != null)) {
-                logger?.info("skipping device owned by `${it.ownerEmail}` because `unreserved` filter is active")
+                logger?.info("skipping device owned by `${it.ownerEmail}` because `free` filter is active")
                 return false
             }
 
@@ -279,7 +279,7 @@ class STF {
 
                 //for range filters of the form `sdk=18+`
                     case ~/^[0-9]+\+$/:
-                        matchesSDK = deviceSDK >= (sdkFilter.value[0..-2] as int)
+                        matchesSDK = (deviceSDK >= (sdkFilter.value[0..-2] as int))
                         break
 
                 //simple case `sdk=23`
@@ -326,7 +326,7 @@ class STF {
  * Use the STF API to reserve a list of devices
  * @param serials an array of SERIALs to reserve. If the array contains the item "all", then all the devices provided by STF will be reserved
  */
-    def addDevicesWithSerials(String[] serials) {
+    def reserveDevicesWithSerials(String[] serials) {
         def availableDeviceSerials = getAvailableDeviceSerials()
         logger?.info "availableDeviceSerials are: $availableDeviceSerials; we're going to connect to $serials"
 
@@ -362,7 +362,7 @@ class STF {
 /**
  * Run "adb connect" for all the devices that are currently reserved from this machine
  */
-    def connectToReservedDevices() {
+    def connectToAllReservedDevices() {
 
         def resp = stf_api.request(GET, JSON) { req ->
             uri.path = '/api/v1/user/devices'
@@ -386,7 +386,7 @@ class STF {
  * This is equivalent to clicking "Stop using" from the STF UI for each device.
  * This should automatically disconnect devices from ADB as well
  */
-    def releaseReservedDevices() {
+    def releaseAllReservedDevices() {
         def getUserDevicesResponse = stf_api.request(GET, JSON) { req ->
             uri.path = '/api/v1/user/devices'
         }
