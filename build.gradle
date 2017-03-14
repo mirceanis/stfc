@@ -75,7 +75,6 @@ task install(dependsOn: fatJar) {
 
                     //add install directory to STFC_HOME user variable
                     def stfcHome = "STFC_HOME"
-                    "SETX ${stfcHome} \"${installDir}\"".execute()
 
                     //add STFC_HOME to PATH (user scope)
                     def queryProcess = "REG QUERY HKCU\\Environment /v PATH".execute()
@@ -101,6 +100,9 @@ task install(dependsOn: fatJar) {
                         //SETX command could not be used here because it's limited to 1024 chars
                         "REG ADD HKCU\\Environment /v PATH /t REG_EXPAND_SZ /d \"${userPath}\" /f".execute()
                     }
+
+                    //SETX at the end to trigger a WM_SETTINGCHANGE event so that we don't need to restart to reload %PATH%
+                    "SETX ${stfcHome} \"${installDir}\"".execute()
 
                     logger.lifecycle("\nThe bootstrap location was added to PATH.")
 
