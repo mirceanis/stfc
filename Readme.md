@@ -60,12 +60,11 @@ stfc [-a] [-c] [-f <arg>] [-h] [-l] [-q] [-r] [-V] [-v]
 
 #### Notes
 
-Running an allocation command does not release previously allocated devices.
+* Running a filtered allocation command does not release previously allocated devices that don't match the filter.
 
-Listing devices with no filters implicitly adds the "free=true" filter
+* Listing devices with no filters implicitly adds the "free=true" filter
 
-While commands can be combined, it does not always make sense to combine them.
+* While commands can be combined, it does not always make sense to combine them.
 For example, `stfc -la` will allocate all devices but won't list anything because of the implicit filter in lists and the fact that every free device has just been allocated to the current user.
-
 This behavior will probably change in future releases by sanitizing possible combinations and by changing behavior of commands when combined.
 
