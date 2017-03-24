@@ -172,6 +172,17 @@ class STF {
 
     }
 
+    def getConnectionString(def serial) {
+
+        def resp = stf_api.request(POST, JSON) { req ->
+            body = []
+            uri.path = "/api/v1/user/devices/${serial}/remoteConnect".toString()
+        }
+        return resp.remoteConnectUrl
+
+    }
+
+
     /**
      * Filter through devices provided by STF by [sdk, connectionString, notes and reservation status]
      * @param filters set of filters usually provided by command line
@@ -198,20 +209,20 @@ class STF {
         //devices whose `notes` field string contains the given substring
         def filterByNotes = getFilter(F_NOTES)?.value
 
-        getAllDevices().findAll {
+        getAllDevices().findResults {
 
             if (filterByAvailability) {
                 boolean isFree = (it.ownerEmail == null)
                 if (filterByAvailability.value.toBoolean() == !isFree) {
                     logger?.info("skipping device owned by `${it.ownerEmail}` because `$F_FREE` filter is ${filterByAvailability.value}")
-                    return false
+                    return null
                 }
             }
 
             if (filterByCurrentUser) {
                 if (filterByCurrentUser.value.toBoolean() != it.using) {
                     logger?.info("skipping device `${it.serial}` because in_use_by_current_user=${it.using} and `$F_USING` filter is set to `${filterByCurrentUser.value}`")
-                    return false
+                    return null
                 }
             }
 
@@ -237,33 +248,32 @@ class STF {
                         break
                 }
 
-                if (matchesSDK) {
-                    return true
-                } else {
+                if (!matchesSDK) {
                     logger?.info("skipping device with sdk=${it.sdk} because `$F_SDK=$sdkFilter` filter is active")
-                    return false
+                    return null
                 }
             }
 
 
             if (filterByConnection && !it.remoteConnectUrl?.contains(filterByConnection)) {
                 logger?.info("skipping device with connectionString=${it.remoteConnectUrl} because `$F_CONNECT=$filterByConnection` filter is active")
-                return false
+                return null
             }
 
             if (filterByNotes && !it.notes?.contains(filterByNotes)) {
                 logger?.info("skipping device with notes=${it.notes} because `$F_NOTES=$filterByNotes` filter is active")
-                return false
+                return null
             }
 
             if (filterBySerial && !it.serial?.contains(filterBySerial)) {
                 logger?.info("skipping device with serial=${it.serial} because `$F_SERIAL=$filterBySerial` filter is active")
-                return false
+                return null
             }
 
-            true
+            return it
         }
     }
+
 
     /**
      * Use the STF API to reserve a list of devices
@@ -285,10 +295,16 @@ class STF {
      */
     def connectToDevices(Collection<DeviceInfo> devicesToConnect) {
 
-        logger?.info "There are ${devicesToConnect.size} devices available through STF.\nConnecting to each one of:\n" + devicesToConnect*.remoteConnectUrl + "\n"
+        logger?.info "There are ${devicesToConnect.size} devices to connect to."
 
         devicesToConnect.each {
             def connectionString = it.remoteConnectUrl
+
+            if (it.remoteConnectUrl == null) {
+                it.remoteConnectUrl = getConnectionString(it.serial)
+                logger?.info "got RemoteConnectUrl=${it.remoteConnectUrl}"
+            }
+
             logger?.info "connecting ADB to ${connectionString}"
             def adbConnectOutput = "adb connect $connectionString".execute().text
             logger?.info adbConnectOutput
