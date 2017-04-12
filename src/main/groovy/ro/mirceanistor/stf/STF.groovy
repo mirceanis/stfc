@@ -30,6 +30,7 @@ import static ro.mirceanistor.stf.Filters.F_SDK
 import static ro.mirceanistor.stf.Filters.F_SERIAL
 import static ro.mirceanistor.stf.Filters.F_USING
 import static ro.mirceanistor.stf.MainClass.VERBOSE_OUTPUT
+import static groovyx.gpars.GParsPool.withPool
 
 /**
  * A class representing a subset of the STF API relating to device reservation and connection.
@@ -92,7 +93,7 @@ class STF {
             uri.path = '/api/v1/user/devices'
 
             response.failure = { resp ->
-                throw new RuntimeException("Something went wrong with the request, we got: ${resp.statusLine}\n" +
+                throw new RuntimeException("Something went wrong with the request for serial=\"$serial\", we got: ${resp.statusLine}\n" +
                         "Most likely, the device has been disconnected or has been reserved in the meantime")
             }
         }
@@ -181,7 +182,6 @@ class STF {
         return resp.remoteConnectUrl
 
     }
-
 
     /**
      * Filter through devices provided by STF by [sdk, connectionString, notes and reservation status]
@@ -274,7 +274,6 @@ class STF {
         }
     }
 
-
     /**
      * Use the STF API to reserve a list of devices
      * @param devicesToReserve an array of SERIALs to reserve. If the array contains the item "all", then all the devices provided by STF will be reserved
@@ -288,30 +287,57 @@ class STF {
             logger?.info "reserving device $device"
             logger?.info "got response: " + reserveDeviceOutput?.description
         }
+
     }
 
     /**
-     * Run "adb connect" for all the devices that are currently reserved from this machine
+     * Run "adb connect" for all the devices passed as param that are currently reserved from this machine
      */
     def connectToDevices(Collection<DeviceInfo> devicesToConnect) {
 
         logger?.info "There are ${devicesToConnect.size} devices to connect to."
 
-        devicesToConnect.each {
-            def connectionString = it.remoteConnectUrl
+        withPool {
+            devicesToConnect.eachParallel {
+                def connectionString = it.remoteConnectUrl
 
-            if (it.remoteConnectUrl == null) {
-                it.remoteConnectUrl = getConnectionString(it.serial)
-                logger?.info "got RemoteConnectUrl=${it.remoteConnectUrl}"
+                if (it.remoteConnectUrl == null) {
+                    it.remoteConnectUrl = getConnectionString(it.serial)
+                    logger?.info "got RemoteConnectUrl=${it.remoteConnectUrl}"
+                }
+
+                logger?.info "connecting ADB to ${connectionString}"
+                def adbConnectOutput = "adb connect $connectionString".execute().text
+                logger?.info adbConnectOutput
             }
-
-            logger?.info "connecting ADB to ${connectionString}"
-            def adbConnectOutput = "adb connect $connectionString".execute().text
-            logger?.info adbConnectOutput
         }
 
         def adbDevicesOutput = "adb devices".execute().text
         logger?.info "these are all the devices currently accessible through ADB on this machine:\n" + adbDevicesOutput
+    }
+
+    /**
+     * Start the STF identifier for all the devices passed as param
+     */
+    def showDevices(Collection<DeviceInfo> devicesToShow) {
+
+        logger?.info "There are ${devicesToShow.size} devices to light up."
+
+        withPool {
+            devicesToShow.eachParallel {
+                def serial = it.remoteConnectUrl
+
+                if (it.remoteConnectUrl == null) {
+                    it.remoteConnectUrl = getConnectionString(it.serial)
+                    logger?.info "got RemoteConnectUrl=${it.remoteConnectUrl}"
+                }
+
+                logger?.info "starting STF identifier for ${serial}"
+                def adbConnectOutput = "adb -s $serial shell am start -n jp.co.cyberagent.stf/.IdentityActivity".execute().text
+                logger?.info adbConnectOutput
+            }
+        }
+
     }
 
     /**
