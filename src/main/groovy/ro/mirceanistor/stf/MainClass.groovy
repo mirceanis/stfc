@@ -33,6 +33,7 @@ class MainClass {
     public static final String C_FILTER = "filter"
     public static final String C_QUIET = "quiet"
     public static final String C_SHOW = "show"
+    public static final String C_DIFF = "diff"
 
     static void main(String[] args) {
 
@@ -46,6 +47,7 @@ class MainClass {
             options.addOption("q", C_QUIET, false, "only output device serials, nothing else. Negates --verbose option")
 
             options.addOption("l", C_LIST, false, "list available devices.\nCan be combined with --filter option to only show subsets")
+            options.addOption("d", C_DIFF, false, "list allocated devices that don't appear usable in adb-devices\n Can be combined with --filter to be more specific.")
             options.addOption("a", C_ALLOCATE, false, "allocate devices to the current user\nBy default, this reserves every available device.\nIt's best to combine with --filter option to be more specific")
             options.addOption("r", C_RELEASE, false, "release allocated devices\nBy default it releases all but can be combined with --filter to be more specific")
             options.addOption("c", C_CONNECT, false, "connect to reserved devices\nBy default it connects to every allocated device.\n Can be combined with --filter to be more specific.")
@@ -115,10 +117,25 @@ class MainClass {
             if (commandLine.hasOption(C_LIST)) {
 
                 //by default, show all available devices
-                def filters = (rawFilters.size() == 0 ? [ "free" ] : rawFilters)
+                def filters = (rawFilters.size() == 0 ? ["free"] : rawFilters)
 
                 def devices = new STF(filters).queryDevices()
                 devices.each {
+                    if (QUIET_OUTPUT) {
+                        println it.serial
+                    } else {
+                        println it
+                    }
+                }
+                hasAction = true
+            }
+
+            if (commandLine.hasOption(C_DIFF)) {
+
+                def stf = new STF(rawFilters + "using")
+                def devices = stf.queryDevices()
+                def diffed = STF.diffDevices(devices)
+                diffed.each {
                     if (QUIET_OUTPUT) {
                         println it.serial
                     } else {
