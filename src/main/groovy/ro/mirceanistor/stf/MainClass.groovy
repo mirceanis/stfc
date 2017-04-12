@@ -32,6 +32,7 @@ class MainClass {
     public static final String C_CONNECT = "connect"
     public static final String C_FILTER = "filter"
     public static final String C_QUIET = "quiet"
+    public static final String C_SHOW = "show"
 
     static void main(String[] args) {
 
@@ -48,6 +49,7 @@ class MainClass {
             options.addOption("a", C_ALLOCATE, false, "allocate devices to the current user\nBy default, this reserves every available device.\nIt's best to combine with --filter option to be more specific")
             options.addOption("r", C_RELEASE, false, "release allocated devices\nBy default it releases all but can be combined with --filter to be more specific")
             options.addOption("c", C_CONNECT, false, "connect to reserved devices\nBy default it connects to every allocated device.\n Can be combined with --filter to be more specific.")
+            options.addOption("s", C_SHOW, false, "light up the screens of connected devices. Equivalent to 'find device' from the web console\n Can be combined with --filter to be more specific.")
 
             Option filterOption = new Option("f", C_FILTER, true, "filter devices, can be used multiple times to filter by multiple fields.\n" +
                     "If the same field is specified in more than one filter, ONLY the FIRST one is used.\n" +
@@ -123,6 +125,13 @@ class MainClass {
                         println it
                     }
                 }
+                hasAction = true
+            }
+
+            if (commandLine.hasOption(C_SHOW)) {
+                STF stf = new STF(rawFilters + "using")
+                def deviceSerials = stf.queryDevices()
+                stf.showDevices(deviceSerials)
                 hasAction = true
             }
 
