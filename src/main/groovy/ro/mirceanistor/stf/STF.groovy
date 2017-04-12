@@ -355,4 +355,32 @@ class STF {
         }
     }
 
+    /**
+     * Generates a collection of devices that are reserved but aren't usable in "adb devices"
+     * @param myDevices devices passed in by another filter
+     * @return
+     */
+    static def diffDevices(Collection<DeviceInfo> myDevices) {
+
+        def adbDevicesOutput = "adb devices".execute().text.readLines()
+
+        Collection<String> connectedDevices = adbDevicesOutput.collect {
+            if (it.contains("List of devices attached") || it.trim().length() == 0) {
+                return null
+            }
+            def tokens = it.split(/\s/)
+            if (tokens.length < 2 || !tokens[1].contains("device")) {
+                return null
+            }
+            return tokens[0]
+        }
+
+        def diffedDevices = new LinkedList(myDevices)
+        diffedDevices.removeAll {
+            connectedDevices?.contains(it.remoteConnectUrl)
+        }
+
+        return diffedDevices
+    }
+
 }
