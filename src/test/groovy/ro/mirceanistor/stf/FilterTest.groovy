@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when
  * Created by mnistor on 13.03.2017.
  * ~
  */
-public class STFTest {
+public class FilterTest {
 
 //    String[] rawFilters = ["sdk=23",
 //                           "free",
@@ -37,29 +37,29 @@ public class STFTest {
 //    ]
 
     def gigelDevices = [
-            new DeviceInfo("gigel_asdf", 480, 800, 15, "alab", "mockDevice", "adb connect 10.10.20.13:5555", "", false, "gigel13@mailinator.com"),
-            new DeviceInfo("gigel_ghjk", 480, 800, 15, "alap", "mockDevice", "adb connect 10.10.20.13:5556", "", false, "gigel13@mailinator.com"),
-            new DeviceInfo("gigel_qwer", 480, 800, 16, "orto", "mockDevice", "adb connect 10.10.20.13:5557", "", false, "gigel13@mailinator.com"),
-            new DeviceInfo("gigel_tyui", 480, 800, 23, "cala", "mockDevice", "adb connect 10.10.20.13:5558", "", false, "gigel13@mailinator.com"),
+            new DeviceInfo("gigel_asdf", 480, 800, 15, "alab", "mockDevice", "10.10.20.13:5555", "", false, "gigel13@mailinator.com"),
+            new DeviceInfo("gigel_ghjk", 480, 800, 15, "alap", "mockDevice", "10.10.20.13:5556", "", false, "gigel13@mailinator.com"),
+            new DeviceInfo("gigel_qwer", 480, 800, 16, "orto", "mockDevice", "10.10.20.13:5557", "", false, "gigel13@mailinator.com"),
+            new DeviceInfo("gigel_tyui", 480, 800, 23, "cala", "mockDevice", "10.10.20.13:5558", "", false, "gigel13@mailinator.com"),
     ]
 
     def freeDevices = [
-            new DeviceInfo("free_asdf", 480, 800, 23, "alab", "mockDevice", "adb connect 10.10.20.14:5555", "", false, null),
-            new DeviceInfo("free_ghjk", 480, 800, 15, "alap", "mockDevice", "adb connect 10.10.20.14:5556", "", false, null),
-            new DeviceInfo("free_qwer", 480, 800, 16, "orto", "mockDevice", "adb connect 10.10.20.14:5557", "", false, null),
-            new DeviceInfo("free_tyui", 480, 800, 24, "cala", "mockDevice", "adb connect 10.10.20.14:5558", "", false, null),
+            new DeviceInfo("free_asdf", 480, 800, 23, "alab", "mockDevice", "10.10.20.14:5555", "", false, null),
+            new DeviceInfo("free_ghjk", 480, 800, 15, "alap", "mockDevice", "10.10.20.14:5556", "", false, null),
+            new DeviceInfo("free_qwer", 480, 800, 16, "orto", "mockDevice", "10.10.20.14:5557", "", false, null),
+            new DeviceInfo("free_tyui", 480, 800, 24, "cala", "mockDevice", "10.10.20.14:5558", "", false, null),
     ]
 
     def myDevices = [
-            new DeviceInfo("my_asdf", 480, 800, 15, "alab", "mockDevice", "adb connect 10.10.20.15:5555", "", true, "my@mailinator.com"),
-            new DeviceInfo("my_ghjk", 480, 800, 15, "alap", "mockDevice", "adb connect 10.10.20.15:5556", "", true, "my@mailinator.com"),
-            new DeviceInfo("my_qwer", 480, 800, 16, "orto", "mockDevice", "adb connect 10.10.20.15:5557", "", true, "my@mailinator.com"),
-            new DeviceInfo("my_tyui", 480, 800, 25, "cala", "mockDevice", "adb connect 10.10.20.15:5558", "", true, "my@mailinator.com"),
+            new DeviceInfo("my_asdf", 480, 800, 15, "alab", "mockDevice", "10.10.20.15:5555", "", true, "my@mailinator.com"),
+            new DeviceInfo("my_ghjk", 480, 800, 15, "alap", "mockDevice", "10.10.20.15:5556", "", true, "my@mailinator.com"),
+            new DeviceInfo("my_qwer", 480, 800, 16, "orto", "mockDevice", "10.10.20.15:5557", "", true, "my@mailinator.com"),
+            new DeviceInfo("my_tyui", 480, 800, 25, "cala", "mockDevice", "10.10.20.15:5558", "", true, "my@mailinator.com"),
     ]
 
     def allDevices = gigelDevices + freeDevices + myDevices
 
-    STFTest() {
+    FilterTest() {
         MainClass.VERBOSE_OUTPUT = true
     }
 
