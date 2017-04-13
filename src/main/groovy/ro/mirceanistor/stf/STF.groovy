@@ -297,19 +297,17 @@ class STF {
 
         logger?.info "There are ${devicesToConnect.size} devices to connect to."
 
-        withPool {
-            devicesToConnect.eachParallel {
-                def connectionString = it.remoteConnectUrl
+        devicesToConnect.each {
+            def connectionString = it.remoteConnectUrl
 
-                if (it.remoteConnectUrl == null) {
-                    it.remoteConnectUrl = getConnectionString(it.serial)
-                    logger?.info "got RemoteConnectUrl=${it.remoteConnectUrl}"
-                }
-
-                logger?.info "connecting ADB to ${connectionString}"
-                def adbConnectOutput = "adb connect $connectionString".execute().text
-                logger?.info adbConnectOutput
+            if (it.remoteConnectUrl == null) {
+                it.remoteConnectUrl = getConnectionString(it.serial)
+                logger?.info "got RemoteConnectUrl=${it.remoteConnectUrl}"
             }
+
+            logger?.info "connecting ADB to ${connectionString}"
+            def adbConnectOutput = "adb connect $connectionString".execute().text
+            logger?.info adbConnectOutput
         }
 
         def adbDevicesOutput = "adb devices".execute().text
