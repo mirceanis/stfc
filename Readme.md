@@ -20,13 +20,15 @@ STF_URL=http://your.stf.server.url
 
 #### Usage
 ```
-stfc [-a] [-c] [-f <arg>] [-h] [-l] [-q] [-r] [-V] [-v]
+stfc [-a] [-c] [-f <arg>] [-h] [-l] [-q] [-r] [-V] [-v] [-d] [-s]
 
  -a,--allocate       allocate devices to the current user
                      By default, this reserves every available device.
                      It's best to combine with --filter option to be more specific
  -c,--connect        connect to reserved devices
                      By default it connects to every allocated device.
+                     Can be combined with --filter to be more specific.
+ -d,--diff           list allocated devices that don't appear usable in adb-devices
                      Can be combined with --filter to be more specific.
  -f,--filter <arg>   filter devices, can be used multiple times to filter by multiple fields.
                      If the same field is specified in more than one filter, ONLY the FIRST one is used.
@@ -46,17 +48,23 @@ stfc [-a] [-c] [-f <arg>] [-h] [-l] [-q] [-r] [-V] [-v]
  -q,--quiet          only output device serials, nothing else. Negates --verbose option
  -r,--release        release allocated devices
                      By default it releases all but can be combined with --filter to be more specific
+ -s,--show           light up the screens of **connected** devices. Equivalent to 'find device' from the web console
+                     Can be combined with --filter to be more specific.
  -V,--version        show version
  -v,--verbose        show verbose output
+
 ```
 
 #### Examples
 
-* `stfc -l` - list every available device
+* `stfc -l` - list every available(not allocated) device
 * `stfc -lf using` - list devices that I'm using
 * `stfc -ac -f sdk=23` - allocate and connect to all devices with SDK level 23
 * `stfc -acf sdk=15+` - allocate and connect to all devices with SDK level >= 15
 * `stfc -rf serial=01234` - release devices whose serial contains "01234"
+* `stfc -cd` - try to connect to all allocated devices and list the devices that failed to connect
+* `stfc -acs` - light show - connect and light up every available device
+* `stfc -sf sdk=21` - run "find device" on every one of my connected devices with API 21
 
 #### Notes
 
