@@ -19,7 +19,7 @@ import org.gradle.internal.os.OperatingSystem
 import java.nio.file.Files
 
 group 'ro.mirceanistor.stf'
-version '0.5'
+version '0.6'
 
 apply plugin: 'groovy'
 
