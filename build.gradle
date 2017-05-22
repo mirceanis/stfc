@@ -132,7 +132,12 @@ task install(dependsOn: fatJar) {
                     bashStrap.text += "java -jar \"${jarLocation}\" \$@"
                     bashStrap.setExecutable(true, true)
                     //symlink to the bash script
-                    Files.delete(symlinkPath)
+                    try {
+                        Files.delete(symlinkPath)
+                    } catch (IOException ex) {
+                        logger.debug("there was an exception when trying to delete old symlink:", ex)
+                    }
+                    Files.createDirectories(symlinkPath.parent)
                     Files.createSymbolicLink(symlinkPath, new File(installLocation).toPath())
 
                     logger.lifecycle("\nCreated \"stfc\" bootstrap in \"${installDir}\".\n" +
