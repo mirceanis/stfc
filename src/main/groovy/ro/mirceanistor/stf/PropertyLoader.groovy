@@ -44,6 +44,8 @@ class PropertyLoader {
                 System.getProperty("user.dir") + PROPERTIES_FILE,
         ]
 
+    static Properties mProps = null
+
     /**
      * Builds the path to the *.jar file that is currently running
      * @return
@@ -71,7 +73,7 @@ class PropertyLoader {
     }
 
     static Properties loadProperties() {
-        Properties properties = new Properties()
+        Properties properties = mProps?:new Properties()
         STF_PROPERTIES_LOCATIONS.each {
             if (new File(it).exists()) {
                 properties.load(new FileInputStream(it))
@@ -110,5 +112,10 @@ class PropertyLoader {
         }
 
         return [stf_url, stf_access_token]
+    }
+
+    //for testing purposes
+    static void setProps(Properties props) {
+        mProps = props
     }
 }

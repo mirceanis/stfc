@@ -16,10 +16,11 @@
 
 package ro.mirceanistor.stf
 
+import org.junit.Before
 import org.junit.Test
 
 import static org.mockito.Mockito.spy
-import static org.mockito.Mockito.when
+import static org.mockito.Mockito.doReturn
 
 /**
  * Created by mnistor on 13.03.2017.
@@ -63,12 +64,20 @@ public class FilterTest {
         MainClass.VERBOSE_OUTPUT = true
     }
 
+    @Before
+    public void setUp() {
+        Properties props = new Properties()
+        props.setProperty("STF_ACCESS_TOKEN", "some token")
+        props.setProperty("STF_URL", "http://localhost")
+        PropertyLoader.setProps(props)
+    }
+
 
     @Test
     public void checkFilterByFreeDevices() throws Exception {
         STF mocked = spy(new STF(["free"]))
 
-        when(mocked.getAllDevices()).thenReturn(allDevices)
+        doReturn(allDevices).when(mocked).getAllDevices()
 
         def queryResult = mocked.queryDevices()
 
@@ -79,7 +88,7 @@ public class FilterTest {
     public void checkFilterByOccupiedDevices() throws Exception {
         STF mocked = spy(new STF(["free=false"]))
 
-        when(mocked.getAllDevices()).thenReturn(allDevices)
+        doReturn(allDevices).when(mocked).getAllDevices()
 
         def queryResult = mocked.queryDevices()
 
@@ -91,7 +100,7 @@ public class FilterTest {
     public void checkFilterByNotUsing() throws Exception {
         STF mocked = spy(new STF(["using=false"]))
 
-        when(mocked.getAllDevices()).thenReturn(allDevices)
+        doReturn(allDevices).when(mocked).getAllDevices()
 
         def queryResult = mocked.queryDevices()
 
@@ -102,7 +111,7 @@ public class FilterTest {
     public void checkFilterByInvalidBoolean() throws Exception {
         STF mocked = spy(new STF(["using=gigel"]))
 
-        when(mocked.getAllDevices()).thenReturn(allDevices)
+        doReturn(allDevices).when(mocked).getAllDevices()
 
         def queryResult = mocked.queryDevices()
 
@@ -113,7 +122,7 @@ public class FilterTest {
     public void checkFilterByMyDevices() throws Exception {
         STF mocked = spy(new STF(["using"]))
 
-        when(mocked.getAllDevices()).thenReturn(allDevices)
+        doReturn(allDevices).when(mocked).getAllDevices()
 
         def queryResult = mocked.queryDevices()
 
@@ -124,7 +133,7 @@ public class FilterTest {
     public void checkFilterBySerial() throws Exception {
         STF mocked = spy(new STF(["serial=asdf"]))
 
-        when(mocked.getAllDevices()).thenReturn(allDevices)
+        doReturn(allDevices).when(mocked).getAllDevices()
 
         def queryResult = mocked.queryDevices()
 
@@ -135,7 +144,7 @@ public class FilterTest {
     public void checkFilterBySdkEquals() throws Exception {
         STF mocked = spy(new STF(["sdk=23"]))
 
-        when(mocked.getAllDevices()).thenReturn(allDevices)
+        doReturn(allDevices).when(mocked).getAllDevices()
 
         def queryResult = mocked.queryDevices()
 
@@ -146,7 +155,7 @@ public class FilterTest {
     public void checkFilterBySdkPlus() throws Exception {
         STF mocked = spy(new STF(["sdk=24+"]))
 
-        when(mocked.getAllDevices()).thenReturn(allDevices)
+        doReturn(allDevices).when(mocked).getAllDevices()
 
         def queryResult = mocked.queryDevices()
 
@@ -157,7 +166,7 @@ public class FilterTest {
     public void checkFilterBySdkInterval() throws Exception {
         STF mocked = spy(new STF(["sdk=24-25"]))
 
-        when(mocked.getAllDevices()).thenReturn(allDevices)
+        doReturn(allDevices).when(mocked).getAllDevices()
 
         def queryResult = mocked.queryDevices()
 
