@@ -94,21 +94,21 @@ class MainClass {
             }
 
             if (commandLine.hasOption(C_ALLOCATE)) {
-                STF stf = new STF(rawFilters + "free")
+                STF stf = new STF(rawFilters + Filters.F_FREE)
                 def deviceSerials = stf.queryDevices()
                 stf.reserveDevicesWithSerials(deviceSerials)
                 hasAction = true
             }
 
             if (commandLine.hasOption(C_CONNECT)) {
-                STF stf = new STF(rawFilters + "using")
+                STF stf = new STF(rawFilters + Filters.F_USING)
                 def deviceSerials = stf.queryDevices()
                 stf.connectToDevices(deviceSerials)
                 hasAction = true
             }
 
             if (commandLine.hasOption(C_RELEASE)) {
-                STF stf = new STF(rawFilters + "using")
+                STF stf = new STF(rawFilters + Filters.F_USING)
                 def deviceSerials = stf.queryDevices()
                 stf.releaseDevices(deviceSerials)
                 hasAction = true
@@ -117,9 +117,9 @@ class MainClass {
             if (commandLine.hasOption(C_LIST)) {
 
                 //by default, show all available devices
-                def filters = (rawFilters.size() == 0 ? ["free"] : rawFilters)
-
-                def devices = new STF(filters).queryDevices()
+                def filters = (rawFilters.size() == 0 ? [Filters.F_FREE] : rawFilters)
+                STF stf = new STF(filters)
+                def devices = stf.queryDevices()
                 devices.each {
                     if (QUIET_OUTPUT) {
                         println it.serial
@@ -132,7 +132,7 @@ class MainClass {
 
             if (commandLine.hasOption(C_DIFF)) {
 
-                def stf = new STF(rawFilters + "using")
+                def stf = new STF(rawFilters + Filters.F_USING)
                 def devices = stf.queryDevices()
                 def diffed = STF.diffDevices(devices)
                 diffed.each {
@@ -146,7 +146,7 @@ class MainClass {
             }
 
             if (commandLine.hasOption(C_SHOW)) {
-                STF stf = new STF(rawFilters + "using")
+                STF stf = new STF(rawFilters + Filters.F_USING)
                 def deviceSerials = stf.queryDevices()
                 stf.showDevices(deviceSerials)
                 hasAction = true
