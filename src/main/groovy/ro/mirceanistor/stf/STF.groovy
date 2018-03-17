@@ -38,8 +38,7 @@ import static groovyx.gpars.GParsPool.withPool
  */
 class STF {
 
-
-    def stf_api
+    HTTPBuilder stf_api
 
     def filters = {}
 
