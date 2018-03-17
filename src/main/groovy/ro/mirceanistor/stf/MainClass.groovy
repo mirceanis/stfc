@@ -69,6 +69,7 @@ class MainClass {
             } catch (ParseException e) {
                 e.printStackTrace()
                 CLI.printUsage(options)
+                System.exit(1)
                 return
             }
 
@@ -153,6 +154,7 @@ class MainClass {
             System.err.print args?.join(" ")
             System.err.print("\n")
             ex.printStackTrace()
+            System.exit(1)
         }
     }
 }
