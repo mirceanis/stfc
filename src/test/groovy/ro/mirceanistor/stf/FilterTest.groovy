@@ -172,5 +172,4 @@ public class FilterTest {
 
         assert queryResult == [freeDevices[3], myDevices[3]]
     }
-
 }
