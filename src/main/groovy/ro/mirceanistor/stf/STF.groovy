@@ -21,16 +21,11 @@ import groovyx.net.http.HTTPBuilder
 import java.util.logging.Level
 import java.util.logging.Logger
 
+import static groovyx.gpars.GParsPool.withPool
 import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.Method.*
-import static ro.mirceanistor.stf.Filters.F_CONNECT
-import static ro.mirceanistor.stf.Filters.F_FREE
-import static ro.mirceanistor.stf.Filters.F_NOTES
-import static ro.mirceanistor.stf.Filters.F_SDK
-import static ro.mirceanistor.stf.Filters.F_SERIAL
-import static ro.mirceanistor.stf.Filters.F_USING
+import static ro.mirceanistor.stf.Filters.*
 import static ro.mirceanistor.stf.MainClass.VERBOSE_OUTPUT
-import static groovyx.gpars.GParsPool.withPool
 
 /**
  * A class representing a subset of the STF API relating to device reservation and connection.
@@ -68,7 +63,7 @@ class STF {
             logger.setLevel(Level.WARNING)
         }
 
-        filters = Filters.parseFilters(rawFilters)
+        filters = parseFilters(rawFilters)
 
         stf_api = new HTTPBuilder("$STF_URL")
         stf_api.setHeaders([Authorization: "Bearer $STF_ACCESS_TOKEN"])
@@ -138,7 +133,7 @@ class STF {
     def getFilter(String filterFullName) {
 
         def matches = filters.findAll {
-            filterFullName.startsWith(it.key)
+            filterFullName.startsWith(it.key as String)
         }
 
         if (matches.size() > 0) {
@@ -167,9 +162,8 @@ class STF {
             }
             true
         }.collect {
-            new DeviceInfo(it.serial, it.display.width, it.display.height, Integer.valueOf(it.sdk), it.name, it.model, it.remoteConnectUrl, it.notes, it.using, it.owner?.email)
+            new DeviceInfo(it.serial, it.display.width, it.display.height, it.sdk, it.name, it.model, it.remoteConnectUrl, it.notes, it.using, it.owner?.email)
         }
-
     }
 
     def getConnectionString(def serial) {
@@ -232,13 +226,13 @@ class STF {
                 switch (sdkFilter.value) {
                 //for range filters of the form `sdk=18-23`
                     case ~/^[0-9]+-[0-9]+$/:
-                        def range = sdkFilter.value.split("-").collect { it as int }
+                        def range = (sdkFilter.value as String).split("-").collect { it as int }
                         matchesSDK = (deviceSDK in range[0]..range[1])
                         break
 
                 //for range filters of the form `sdk=18+`
                     case ~/^[0-9]+\+$/:
-                        matchesSDK = (deviceSDK >= (sdkFilter.value[0..-2] as int))
+                        matchesSDK = (deviceSDK >= ( (sdkFilter.value as String)[0..-2] as int))
                         break
 
                 //simple case `sdk=23`
@@ -254,17 +248,17 @@ class STF {
             }
 
 
-            if (filterByConnection && !it.remoteConnectUrl?.contains(filterByConnection)) {
+            if (filterByConnection && !it.remoteConnectUrl?.contains(filterByConnection as String)) {
                 logger?.info("skipping device with connectionString=${it.remoteConnectUrl} because `$F_CONNECT=$filterByConnection` filter is active")
                 return null
             }
 
-            if (filterByNotes && !it.notes?.contains(filterByNotes)) {
+            if (filterByNotes && !it.notes?.contains(filterByNotes as String)) {
                 logger?.info("skipping device with notes=${it.notes} because `$F_NOTES=$filterByNotes` filter is active")
                 return null
             }
 
-            if (filterBySerial && !it.serial?.contains(filterBySerial)) {
+            if (filterBySerial && !it.serial?.contains(filterBySerial as String)) {
                 logger?.info("skipping device with serial=${it.serial} because `$F_SERIAL=$filterBySerial` filter is active")
                 return null
             }
@@ -284,7 +278,7 @@ class STF {
         devicesToReserve.each { device ->
             def reserveDeviceOutput = reserveDevice(device.serial)
             logger?.info "reserving device $device"
-            logger?.info "got response: " + reserveDeviceOutput?.description
+            logger?.info "got response: " + ((String) reserveDeviceOutput?.description)
         }
 
     }
@@ -347,7 +341,7 @@ class STF {
             if (it != null) {
                 logger?.info "releasing device with serial $it"
                 def releaseDeviceOutput = releaseDevice(it)
-                logger?.info releaseDeviceOutput?.description
+                logger?.info ((String) releaseDeviceOutput?.description)
             }
         }
     }

@@ -104,7 +104,7 @@ task install(dependsOn: fatJar) {
                         //"PATH" variable already exists in the user space
                         //sanitize the output to extract the data
                         def rawOutput = queryProcess.text.tokenize(" ")
-                        rawOutput = rawOutput.subList(3, rawOutput.size)
+                        rawOutput = rawOutput.subList(3, (int) rawOutput.size)
                         userPath = rawOutput.join(" ").trim()
 
                         if (userPath[-1] != ";") {
