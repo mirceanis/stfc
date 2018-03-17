@@ -57,6 +57,6 @@ class DeviceInfo {
                 ", notes='" + notes + '\'' +
                 ", using=" + using +
                 ", ownerEmail='" + ownerEmail + '\'' +
-                '}';
+                '}'
     }
 }

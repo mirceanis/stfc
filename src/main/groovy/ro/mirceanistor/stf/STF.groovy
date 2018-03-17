@@ -226,7 +226,7 @@ class STF {
             }
 
             if (sdkFilter) {
-                def deviceSDK = (int) it.sdk;
+                def deviceSDK = (int) it.sdk
                 def matchesSDK
 
                 switch (sdkFilter.value) {
