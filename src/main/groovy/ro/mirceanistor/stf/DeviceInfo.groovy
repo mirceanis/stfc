@@ -45,7 +45,7 @@ class DeviceInfo {
     String ownerEmail
 
     @Override
-    public String toString() {
+    String toString() {
         return "DeviceInfo{" +
                 " sdk=" + sdk +
                 ", serial='" + serial + '\'' +
