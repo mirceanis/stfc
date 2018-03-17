@@ -62,6 +62,5 @@ class CLI {
         } catch (Exception e) {
             throw new RuntimeException("Loading MANIFEST for class " + clz + " failed!", e)
         }
-
     }
 }

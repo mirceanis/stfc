@@ -35,16 +35,16 @@ class STF {
 
     HTTPBuilder stf_api
 
-    def filters = {}
+    def filters
 
     //per user access token
-    def STF_ACCESS_TOKEN = null
+    def STF_ACCESS_TOKEN
 
     //the STF api URL
-    def STF_URL = null
+    def STF_URL
 
-    // the logger used by the project
-    Logger logger = null
+    //the logger used by the project
+    Logger logger
 
     /**
      * STF class constructor.
@@ -72,8 +72,6 @@ class STF {
             throw new RuntimeException("Unauthorized request: ${resp.statusLine}\n" +
                     "\nThis is most likely caused by a STF_ACCESS_TOKEN mismatch.\n" + PropertyLoader.TOKEN_GENERATION_INSTRUCTIONS)
         }
-
-
     }
 
     /**
@@ -141,8 +139,6 @@ class STF {
                 logger.warning("Multiple filters match; returning the first match ONLY $filterFullName: $filters;")
             }
             return matches[0]
-        } else {
-            return null
         }
     }
 
@@ -172,8 +168,8 @@ class STF {
             body = []
             uri.path = "/api/v1/user/devices/${serial}/remoteConnect".toString()
         }
-        return resp.remoteConnectUrl
 
+        return resp.remoteConnectUrl
     }
 
     /**
@@ -280,7 +276,6 @@ class STF {
             logger?.info "reserving device $device"
             logger?.info "got response: " + ((String) reserveDeviceOutput?.description)
         }
-
     }
 
     /**
@@ -328,7 +323,6 @@ class STF {
                 logger?.info adbConnectOutput
             }
         }
-
     }
 
     /**
@@ -351,7 +345,7 @@ class STF {
      * @param myDevices devices passed in by another filter
      * @return
      */
-    static def diffDevices(Collection<DeviceInfo> myDevices) {
+    static Collection<DeviceInfo> diffDevices(Collection<DeviceInfo> myDevices) {
 
         def adbDevicesOutput = "adb devices".execute().text.readLines()
 
@@ -366,12 +360,11 @@ class STF {
             return tokens[0]
         }
 
-        def diffedDevices = new LinkedList(myDevices)
+        List<DeviceInfo> diffedDevices = new LinkedList(myDevices)
         diffedDevices.removeAll {
             connectedDevices?.contains(it.remoteConnectUrl)
         }
 
         return diffedDevices
     }
-
 }

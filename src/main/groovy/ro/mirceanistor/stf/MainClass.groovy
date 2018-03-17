@@ -121,11 +121,7 @@ class MainClass {
                 STF stf = new STF(filters)
                 def devices = stf.queryDevices()
                 devices.each {
-                    if (QUIET_OUTPUT) {
-                        println it.serial
-                    } else {
-                        println it
-                    }
+                    println (QUIET_OUTPUT ? it.serial : it)
                 }
                 hasAction = true
             }
@@ -136,11 +132,7 @@ class MainClass {
                 def devices = stf.queryDevices()
                 def diffed = STF.diffDevices(devices)
                 diffed.each {
-                    if (QUIET_OUTPUT) {
-                        println it.serial
-                    } else {
-                        println it
-                    }
+                    println (QUIET_OUTPUT ? it.serial : it)
                 }
                 hasAction = true
             }
@@ -162,6 +154,5 @@ class MainClass {
             System.err.print("\n")
             ex.printStackTrace()
         }
-
     }
 }
