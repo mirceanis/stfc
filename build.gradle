@@ -71,22 +71,21 @@ task install(dependsOn: fatJar) {
         configurations.archives.allArtifacts.each {
             if (it.name == "${project.name}-all".toString()) {
                 def sep = File.separator
-                def installDir = "${System.getProperty("user.home")}${sep}.local${sep}stf-connect"
-                def jarName = it.getFile().name
-                def jarLocation = "${installDir}${sep}${jarName}"
-                def installLocation = "${installDir}${sep}stfc"
-                def artifactLocation = it.getFile()
+                def installDir = new File("${System.getProperty("user.home")}${sep}.local${sep}stf-connect")
                 def symlinkPath = new File("${System.getProperty("user.home")}${sep}.local${sep}bin${sep}stfc").toPath()
+                def artifactFile = it.getFile()
+                def jarLocation = "${installDir}${sep}${artifactFile.name}"
+                def bootstrapLocation = "${installDir}${sep}stfc"
 
                 copy {
-                    from "$artifactLocation"
+                    from "$artifactFile"
                     into "$installDir"
                 }
 
                 if (OperatingSystem.current().isWindows()) {
 
                     //create bat bootstrap
-                    def batStrap = new File("${installLocation}.bat")
+                    def batStrap = new File("${bootstrapLocation}.bat")
                     batStrap.text = "@echo off\n"
                     batStrap.text += "java -jar \"${jarLocation}\" %*"
 
@@ -127,7 +126,7 @@ task install(dependsOn: fatJar) {
 
                 } else {
                     //create bash bootstrap
-                    def bashStrap = new File(installLocation)
+                    def bashStrap = new File(bootstrapLocation)
                     bashStrap.text = "#!/bin/bash\n"
                     bashStrap.text += "java -jar \"${jarLocation}\" \$@"
                     bashStrap.setExecutable(true, true)
@@ -138,7 +137,7 @@ task install(dependsOn: fatJar) {
                         logger.debug("there was an exception when trying to delete old symlink:", ex)
                     }
                     Files.createDirectories(symlinkPath.parent)
-                    Files.createSymbolicLink(symlinkPath, new File(installLocation).toPath())
+                    Files.createSymbolicLink(symlinkPath, bashStrap.toPath())
 
                     logger.lifecycle("\nCreated \"stfc\" bootstrap in \"${installDir}\".\n" +
                             "Add it to your PATH if you want global access")
