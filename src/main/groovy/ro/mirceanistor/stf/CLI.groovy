@@ -43,7 +43,7 @@ class CLI {
     }
 
     /**
-     * obtains the Manifest represented by the MANIFEST.MF file in this jar
+     * Obtains the Manifest represented by the MANIFEST.MF file in this jar
      *
      * @param clz a class contained in this jar
      * @return the Manifest
