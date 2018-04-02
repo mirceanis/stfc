@@ -158,7 +158,8 @@ class STF {
             }
             true
         }.collect {
-            new DeviceInfo(it.serial, it.display.width, it.display.height, it.sdk, it.name, it.model, it.remoteConnectUrl, it.notes, it.using, it.owner?.email)
+            //noinspection GroovyAssignabilityCheck
+            new DeviceInfo(it.serial, it.display.width, it.display.height, Integer.valueOf(it.sdk), it.name, it.model, it.remoteConnectUrl, it.notes, it.using, it.owner?.email)
         }
     }
 
