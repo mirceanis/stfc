@@ -73,7 +73,7 @@ class PropertyLoader {
     }
 
     static Properties loadProperties() {
-        Properties properties = mProps?:new Properties()
+        Properties properties = mProps ?: new Properties()
         STF_PROPERTIES_LOCATIONS.each {
             if (new File(it).exists()) {
                 properties.load(new FileInputStream(it))
