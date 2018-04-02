@@ -50,19 +50,12 @@ class Filters {
             if (matcher.matches()) {
                 def key = matcher.group("key")
                 def operator = matcher.group("operator")
-                def value = matcher.group("value")
+                def value = operator != null ? matcher.group("value") : true
 
-                if (operator == null) {
-                    value = true
-                }
-
-                [key: key, value: value]
-
+                return [key: key, value: value]
             } else {
                 logger?.warning("Can't parse filter: \"${it}\"")
-                null
             }
         }
     }
-
 }
