@@ -21,9 +21,8 @@ package ro.mirceanistor.stf
  */
 class PropertyLoader {
 
-    static final String PROPERTIES_FILE = File.separator + "stf.properties"
-    static final String PROPERTIES_STF_FILE = File.separator + ".stf" + PROPERTIES_FILE
-
+    static final String STF_PROPERTIES_FILE = File.separator + "stf.properties"
+    static final String STF_PROPERTIES_DIR = File.separator + ".stf"
 
     protected static def TOKEN_GENERATION_INSTRUCTIONS = "\nTo generate a token, go to the STF console.\n" +
             "Under Settings / Keys / Access Tokens, click the \"+\" button to generate a new token.\n" +
@@ -32,17 +31,19 @@ class PropertyLoader {
             "On Linux, that's \"~/.stf/stf.properties\" "
 
     /**
-     * builds a list of possible locations for the STF properties
+     * Builds a list of possible locations for the STF properties
      * @return list of String paths
      */
     static def STF_PROPERTIES_LOCATIONS = [
-                System.getProperty("user.home") + "/.gradle/gradle.properties",
-                new File(getPathToJar()).parent + PROPERTIES_STF_FILE,
-                new File(getPathToJar()).parent + PROPERTIES_FILE,
-                System.getProperty("user.home") + PROPERTIES_STF_FILE,
-                System.getProperty("user.dir") + PROPERTIES_STF_FILE,
-                System.getProperty("user.dir") + PROPERTIES_FILE,
-        ]
+            // "global" files
+            System.getProperty("user.home") + File.separator + ".gradle" + File.separator + "gradle.properties",
+            System.getProperty("user.home") + STF_PROPERTIES_DIR + STF_PROPERTIES_FILE,
+            // "local" files
+            System.getProperty("user.dir") + STF_PROPERTIES_DIR + STF_PROPERTIES_FILE,
+            System.getProperty("user.dir") + STF_PROPERTIES_FILE,
+            new File(getPathToJar()).parent + STF_PROPERTIES_DIR + STF_PROPERTIES_FILE,
+            new File(getPathToJar()).parent + STF_PROPERTIES_FILE,
+    ]
 
     static Properties mProps = null
 
@@ -73,7 +74,7 @@ class PropertyLoader {
     }
 
     static Properties loadProperties() {
-        Properties properties = mProps?:new Properties()
+        Properties properties = mProps ?: new Properties()
         STF_PROPERTIES_LOCATIONS.each {
             if (new File(it).exists()) {
                 properties.load(new FileInputStream(it))

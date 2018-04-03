@@ -39,13 +39,11 @@ class CLI {
      */
     static void printUsage(Options options) {
         HelpFormatter formatter = new HelpFormatter()
-
-        formatter.printHelp(120, "java -jar stf.jar [options]", null, options, null, false);
-
+        formatter.printHelp(120, "java -jar stf.jar [options]", null, options, null, false)
     }
 
     /**
-     * obtains the Manifest represented by the MANIFEST.MF file in this jar
+     * Obtains the Manifest represented by the MANIFEST.MF file in this jar
      *
      * @param clz a class contained in this jar
      * @return the Manifest
@@ -64,6 +62,5 @@ class CLI {
         } catch (Exception e) {
             throw new RuntimeException("Loading MANIFEST for class " + clz + " failed!", e)
         }
-
     }
 }

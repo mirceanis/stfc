@@ -19,14 +19,14 @@ package ro.mirceanistor.stf
 import org.junit.Before
 import org.junit.Test
 
-import static org.mockito.Mockito.spy
 import static org.mockito.Mockito.doReturn
+import static org.mockito.Mockito.spy
 
 /**
  * Created by mnistor on 13.03.2017.
  * ~
  */
-public class FilterTest {
+class FilterTest {
 
 //    String[] rawFilters = ["sdk=23",
 //                           "free",
@@ -65,7 +65,7 @@ public class FilterTest {
     }
 
     @Before
-    public void setUp() {
+    void setUp() {
         Properties props = new Properties()
         props.setProperty("STF_ACCESS_TOKEN", "some token")
         props.setProperty("STF_URL", "http://localhost")
@@ -74,7 +74,7 @@ public class FilterTest {
 
 
     @Test
-    public void checkFilterByFreeDevices() throws Exception {
+    void checkFilterByFreeDevices() throws Exception {
         STF mocked = spy(new STF(["free"]))
 
         doReturn(allDevices).when(mocked).getAllDevices()
@@ -85,7 +85,7 @@ public class FilterTest {
     }
 
     @Test
-    public void checkFilterByOccupiedDevices() throws Exception {
+    void checkFilterByOccupiedDevices() throws Exception {
         STF mocked = spy(new STF(["free=false"]))
 
         doReturn(allDevices).when(mocked).getAllDevices()
@@ -97,7 +97,7 @@ public class FilterTest {
 
 
     @Test
-    public void checkFilterByNotUsing() throws Exception {
+    void checkFilterByNotUsing() throws Exception {
         STF mocked = spy(new STF(["using=false"]))
 
         doReturn(allDevices).when(mocked).getAllDevices()
@@ -108,7 +108,7 @@ public class FilterTest {
     }
 
     @Test
-    public void checkFilterByInvalidBoolean() throws Exception {
+    void checkFilterByInvalidBoolean() throws Exception {
         STF mocked = spy(new STF(["using=gigel"]))
 
         doReturn(allDevices).when(mocked).getAllDevices()
@@ -119,7 +119,7 @@ public class FilterTest {
     }
 
     @Test
-    public void checkFilterByMyDevices() throws Exception {
+    void checkFilterByMyDevices() throws Exception {
         STF mocked = spy(new STF(["using"]))
 
         doReturn(allDevices).when(mocked).getAllDevices()
@@ -130,7 +130,7 @@ public class FilterTest {
     }
 
     @Test
-    public void checkFilterBySerial() throws Exception {
+    void checkFilterBySerial() throws Exception {
         STF mocked = spy(new STF(["serial=asdf"]))
 
         doReturn(allDevices).when(mocked).getAllDevices()
@@ -141,7 +141,7 @@ public class FilterTest {
     }
 
     @Test
-    public void checkFilterBySdkEquals() throws Exception {
+    void checkFilterBySdkEquals() throws Exception {
         STF mocked = spy(new STF(["sdk=23"]))
 
         doReturn(allDevices).when(mocked).getAllDevices()
@@ -152,7 +152,7 @@ public class FilterTest {
     }
 
     @Test
-    public void checkFilterBySdkPlus() throws Exception {
+    void checkFilterBySdkPlus() throws Exception {
         STF mocked = spy(new STF(["sdk=24+"]))
 
         doReturn(allDevices).when(mocked).getAllDevices()
@@ -163,7 +163,7 @@ public class FilterTest {
     }
 
     @Test
-    public void checkFilterBySdkInterval() throws Exception {
+    void checkFilterBySdkInterval() throws Exception {
         STF mocked = spy(new STF(["sdk=24-25"]))
 
         doReturn(allDevices).when(mocked).getAllDevices()
@@ -172,5 +172,4 @@ public class FilterTest {
 
         assert queryResult == [freeDevices[3], myDevices[3]]
     }
-
 }
