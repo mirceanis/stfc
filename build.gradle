@@ -139,7 +139,7 @@ task install(dependsOn: fatJar) {
                     Files.createDirectories(symlinkPath.parent)
                     Files.createSymbolicLink(symlinkPath, bashStrap.toPath())
 
-                    logger.lifecycle("\nCreated \"stfc\" bootstrap in \"${installDir}\".\n" +
+                    logger.lifecycle("\nCreated \"stfc\" bootstrap at \"${symlinkPath}\".\n" +
                             "Add it to your PATH if you want global access")
                 }
 
