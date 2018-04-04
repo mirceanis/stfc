@@ -131,7 +131,7 @@ class FilterTest {
 
     @Test
     void checkFilterBySerial() throws Exception {
-        STF mocked = spy(new STF(["serial=asdf"]))
+        STF mocked = spy(new STF(["serial=.*asdf"]))
 
         doReturn(allDevices).when(mocked).getAllDevices()
 
