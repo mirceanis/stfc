@@ -14,10 +14,14 @@
  * limitations under the License.
  ******************************************************************************/
 
-package ro.mirceanistor.stf
+package ro.mirceanistor.stf.filters
 
 import org.junit.Before
 import org.junit.Test
+import ro.mirceanistor.stf.DeviceInfo
+import ro.mirceanistor.stf.MainClass
+import ro.mirceanistor.stf.PropertyLoader
+import ro.mirceanistor.stf.STF
 
 import static org.mockito.Mockito.doReturn
 import static org.mockito.Mockito.spy
@@ -37,28 +41,28 @@ class FilterTest {
 //                           "notes~[a-zA-Z0-9]*?:"
 //    ]
 
-    def gigelDevices = [
+    def static gigelDevices = [
             new DeviceInfo("gigel_asdf", 480, 800, 15, "alab", "mockDevice", "10.10.20.13:5555", "", false, "gigel13@mailinator.com"),
             new DeviceInfo("gigel_ghjk", 480, 800, 15, "alap", "mockDevice", "10.10.20.13:5556", "", false, "gigel13@mailinator.com"),
             new DeviceInfo("gigel_qwer", 480, 800, 16, "orto", "mockDevice", "10.10.20.13:5557", "", false, "gigel13@mailinator.com"),
             new DeviceInfo("gigel_tyui", 480, 800, 23, "cala", "mockDevice", "10.10.20.13:5558", "", false, "gigel13@mailinator.com"),
     ]
 
-    def freeDevices = [
+    def static freeDevices = [
             new DeviceInfo("free_asdf", 480, 800, 23, "alab", "mockDevice", "10.10.20.14:5555", "", false, null),
             new DeviceInfo("free_ghjk", 480, 800, 15, "alap", "mockDevice", "10.10.20.14:5556", "", false, null),
             new DeviceInfo("free_qwer", 480, 800, 16, "orto", "mockDevice", "10.10.20.14:5557", "", false, null),
             new DeviceInfo("free_tyui", 480, 800, 24, "cala", "mockDevice", "10.10.20.14:5558", "", false, null),
     ]
 
-    def myDevices = [
+    def static myDevices = [
             new DeviceInfo("my_asdf", 480, 800, 15, "alab", "mockDevice", "10.10.20.15:5555", "", true, "my@mailinator.com"),
             new DeviceInfo("my_ghjk", 480, 800, 15, "alap", "mockDevice", "10.10.20.15:5556", "", true, "my@mailinator.com"),
             new DeviceInfo("my_qwer", 480, 800, 16, "orto", "mockDevice", "10.10.20.15:5557", "", true, "my@mailinator.com"),
             new DeviceInfo("my_tyui", 480, 800, 25, "cala", "mockDevice", "10.10.20.15:5558", "", true, "my@mailinator.com"),
     ]
 
-    def allDevices = gigelDevices + freeDevices + myDevices
+    def static allDevices = gigelDevices + freeDevices + myDevices
 
     FilterTest() {
         MainClass.VERBOSE_OUTPUT = true
@@ -71,7 +75,6 @@ class FilterTest {
         props.setProperty("STF_URL", "http://localhost")
         PropertyLoader.setProps(props)
     }
-
 
     @Test
     void checkFilterByFreeDevices() throws Exception {
@@ -131,7 +134,7 @@ class FilterTest {
 
     @Test
     void checkFilterBySerial() throws Exception {
-        STF mocked = spy(new STF(["serial=asdf"]))
+        STF mocked = spy(new STF(["serial=.*asdf"]))
 
         doReturn(allDevices).when(mocked).getAllDevices()
 

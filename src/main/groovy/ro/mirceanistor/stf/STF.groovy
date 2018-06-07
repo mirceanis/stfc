@@ -244,19 +244,18 @@ class STF {
                 }
             }
 
+            if (filterBySerial && !it.serial?.matches(filterBySerial as String)) {
+                logger?.info("skipping device with serial=${it.serial} because `$F_SERIAL=$filterBySerial` filter is active")
+                return null
+            }
 
-            if (filterByConnection && !it.remoteConnectUrl?.contains(filterByConnection as String)) {
+            if (filterByConnection && !it.remoteConnectUrl?.matches(filterByConnection as String)) {
                 logger?.info("skipping device with connectionString=${it.remoteConnectUrl} because `$F_CONNECT=$filterByConnection` filter is active")
                 return null
             }
 
-            if (filterByNotes && !it.notes?.contains(filterByNotes as String)) {
+            if (filterByNotes && !it.notes?.matches(filterByNotes as String)) {
                 logger?.info("skipping device with notes=${it.notes} because `$F_NOTES=$filterByNotes` filter is active")
-                return null
-            }
-
-            if (filterBySerial && !it.serial?.contains(filterBySerial as String)) {
-                logger?.info("skipping device with serial=${it.serial} because `$F_SERIAL=$filterBySerial` filter is active")
                 return null
             }
 

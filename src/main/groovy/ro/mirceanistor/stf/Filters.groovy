@@ -32,9 +32,9 @@ class Filters {
             "* `$F_FREE` - devices that are not allocated to any user\n" +
             "* `$F_USING` - devices that are in use by current user\n" +
             "* `$F_SDK` - devices with a specific sdk. This filter can also be ranged,\nEx: `sdk=18-23` OR `sdk=24+`\n" +
-            "* `$F_SERIAL` - devices whose serial contains the specified string\n" +
-            "* `$F_CONNECT` - devices whose connection string contains the specified string\n" +
-            "* `$F_NOTES` - devices whose notes contain the specified string\n" +
+            "* `$F_SERIAL` - devices whose serial matches the specified regex\n" +
+            "* `$F_CONNECT` - devices whose connection string matches the specified regex\n" +
+            "* `$F_NOTES` - devices whose notes matches the specified regex\n" +
             "\n"
 
     /**
