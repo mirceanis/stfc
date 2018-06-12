@@ -37,9 +37,9 @@ stfc [-a] [-c] [-f <arg>] [-h] [-l] [-q] [-r] [-V] [-v] [-d] [-s]
                      * `using` - devices that are in use by current user
                      * `sdk` - devices with a specific sdk. This filter can also be ranged,
                      Ex: `sdk=18-23` OR `sdk=24+`
-                     * `serial` - devices whose serial contains the specified string
-                     * `connect` - devices whose connection string contains the specified string
-                     * `notes` - devices whose notes contain the specified string
+                     * `serial` - devices whose serial matches the specified regex
+                     * `connect` - devices whose connection string matches the specified regex
+                     * `notes` - devices whose notes matches the specified regex
                      Boolean filters can be specified without the actual value, in which case they default to `true`.
                      Ex: `stfc -f using` is equivalent to `stfc -f using=true`
  -h,--help           print this help message
